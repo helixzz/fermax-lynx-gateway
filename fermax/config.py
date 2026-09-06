@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 EXAMPLE = {
-    'building':'Example building', 'unit':'0101', 'extension':0,
+    'building':'Example building', 'block':1, 'unit':'0101', 'extension':0,
     'monitor_ip':'192.0.2.10', 'building_interface':'eth0',
     'home_interface':'wlan0', 'web_port':8765,
     'panels':[{'id':'entrance', 'name':'Entrance', 'ip':'192.0.2.20'}],
@@ -17,6 +17,8 @@ def validate(value):
     if not isinstance(value, dict) or set(value) != set(EXAMPLE):
         raise ValueError('配置字段不完整或含未知字段')
     result = copy.deepcopy(value)
+    if type(result['block']) is not int or not 0 <= result['block'] <= 99:
+        raise ValueError('楼号协议编号范围为 0–99')
     for key in ('building','unit'):
         if not isinstance(result[key],str) or not 1 <= len(result[key]) <= 48 or any(ord(c)<32 for c in result[key]):
             raise ValueError('楼号和门牌号应为 1–48 字符的文本')

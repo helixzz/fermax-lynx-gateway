@@ -143,7 +143,7 @@ class State:
         with self.lock:
             self.tick()
             return {'mode':'live', 'network':self.network, 'call':self.call, 'panel':self.panel,
-                    'identity':{k:self.config[k] for k in ('building','unit','extension')},
+                    'identity':{k:self.config[k] for k in ('building','block','unit','extension')},
                     'panels':[{'id':p['id'],'name':p['name']} for p in self.config['panels']],
                     'auto':dict(self.policy), 'allow_open':self.allow_open, 'relays':list(self.relays),
                     'notice':self.notice, 'events':self.logs(limit=6),

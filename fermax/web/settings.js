@@ -15,7 +15,7 @@ document.querySelector('#configForm').addEventListener('submit',async event=>{
   const button=event.currentTarget.querySelector('button');button.disabled=true;
   try{
     const value=Object.fromEntries(new FormData(event.currentTarget));
-    value.extension=Number(value.extension);value.web_port=Number(value.web_port);
+    value.block=Number(value.block);value.extension=Number(value.extension);value.web_port=Number(value.web_port);
     value.panels=JSON.parse(value.panels);
     const result=await api('/v1/config',value);
     document.querySelector('#configStatus').textContent=result.restart_required?'配置已保存。请核对服务器网卡 IP，然后重启网关服务；当前连接暂不改变。':'配置已保存，当前已生效。';

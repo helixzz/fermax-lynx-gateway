@@ -12,3 +12,7 @@ This client implements a narrow observed LYNX profile, not SIP or RTP in their e
 The public schema contains manually expressed field numbers/types for implemented operations, not a redistributed vendor descriptor bundle. Unknown fields/messages are not interpreted. No captured packet, firmware, key, residence IP or real identity is included in the public tests.
 
 The extension and apartment mapping seen at one site is not sufficient evidence for a universal IP formula; explicit monitor/panel addresses remain required. Interoperability and long-running reliability must be validated separately at each deployment.
+
+The gateway announces only its configured block, apartment, extension and IP to configured panels at startup and every 60 seconds. The numeric protocol block is separate from the display label. This matches one observed installation; directory behavior elsewhere may differ.
+
+Outgoing preview timeout sends CANCEL with the original transaction identifiers. Late final responses to abandoned invitations are acknowledged; late successful dialogs are immediately ended with BYE, without changing a newer call. Retired transactions remain tracked for five minutes. This prevents abandoned previews from leaving pending dialogs on the entrance panel.

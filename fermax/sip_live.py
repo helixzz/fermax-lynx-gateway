@@ -8,7 +8,7 @@ from .protocol import SIP
 
 
 def tag():
-    return uuid.uuid4().hex[:12]
+    return str(uuid.uuid4().int % 2147483646 + 1)
 
 
 def wire(first, headers, body=''):
@@ -39,12 +39,14 @@ class Signaling:
         self.pending = None
         self.cache = {}
         self.ack_response = None
+        self.invites = {}
+        self.cleanup = {}
 
     def sdp(self, audio=False):
         session = int(time.time())+2208988800
         return '\r\n'.join(['v=0', f'o=- {session} {session} IN IP4 {self.own}', 's=-',
             f'c=IN IP4 {self.own}', 't=0 0', f'm=audio {16400 if audio else 0} RTP/AVP 0 101',
-            'a=rtpmap:0 PCMU/8000', 'a=ptime:20', 'a=rtpmap:101 telephone-event/8000',
+            'a=rtpmap:0 PCMU/8000', 'a=ptime:20' if audio else 'a=ptime:0', 'a=rtpmap:101 telephone-event/8000',
             'a=fmtp:101 0-15', 'm=video 16402 RTP/AVP 98', 'a=rtpmap:98 H264/90000', ''])
 
     def response(self, sip, remote, status, reason, body='', local=None):
@@ -71,11 +73,17 @@ class Signaling:
             'Contact':f'<sip:{self.own}:5060>'}
         if body:
             headers['Content-Type'] = 'text/plain' if method == 'BYE' else 'application/sdp'
-        request = wire(f'{method} sip:{d.remote}:5060 SIP/2.0', headers, body)
+        if initial:
+            headers['Expires'] = '120'
+        uri = f'sip:{d.remote}' if initial else f'sip:{d.remote}:5060'
+        request = wire(f'{method} {uri} SIP/2.0', headers, body)
         self.send(request, d.remote)
         if method != 'ACK':
             self.pending = {'wire':request,'seq':str(seq),'method':method,'next':self.clock()+0.5,
                             'delay':0.5,'deadline':self.clock()+16,'provisional':False}
+        if method == 'INVITE':
+            self.invites[(d.cid,str(seq))] = {'wire':request,'remote':d.remote,
+                'expires':self.clock()+300,'abandoned':False,'closed':False}
         return request
 
     def preview(self, remote):
@@ -83,7 +91,7 @@ class Signaling:
             raise ValueError('已有通话或门口机无效')
         self.dialog = Dialog(tag()+'@'+self.own, remote, f'<sip:{self.own}>;tag={tag()}',
                              f'<sip:{remote}>', False, self.clock(), int(time.time()))
-        self.request('INVITE', self.sdp())
+        self.request('INVITE', self.sdp(), initial=True)
         self.notify('outgoing', remote)
 
     def answer(self):
@@ -95,7 +103,8 @@ class Signaling:
         if not self.dialog:
             return
         if self.dialog.phase == 'ringing' and not self.dialog.incoming:
-            raise ValueError('视频连接尚在建立，请等待连接或超时')
+            self.end('Cancelled')
+            return
         if self.pending:
             raise ValueError('信令事务进行中，请稍后挂断')
         self.request('BYE', 'reason:1')
@@ -104,8 +113,49 @@ class Signaling:
 
     def end(self, reason):
         remote = self.dialog.remote if self.dialog else None
+        if self.dialog:
+            for (cid,seq), invite in self.invites.items():
+                if cid == self.dialog.cid:
+                    invite['abandoned'] = True
+                    invite['closed'] = reason.startswith('BYE')
+            if self.pending and self.pending['method']=='INVITE':
+                original = SIP.parse(self.pending['wire'])
+                headers = {k:original.headers[k] for k in ('via','to','from','call-id')}
+                headers['CSeq'] = self.pending['seq']+' CANCEL'
+                data = wire('CANCEL '+original.first.split()[1]+' SIP/2.0',headers)
+                self.send(data,remote)
+                self.cleanup[self.dialog.cid] = {'wire':data,'remote':remote,'seq':self.pending['seq'],
+                    'method':'CANCEL','deadline':self.clock()+16,'next':self.clock()+.5,'delay':.5}
         self.dialog, self.pending, self.ack_response = None, None, None
         self.notify('ended', {'remote':remote,'reason':reason})
+
+    def retired_response(self, sip, remote, cid, seq, method):
+        """ACK late INVITE finals and tear down only our abandoned dialogs."""
+        if method in ('BYE','CANCEL') and cid in self.cleanup and remote == self.cleanup[cid]['remote']:
+            if method==self.cleanup[cid]['method'] and seq == self.cleanup[cid]['seq'] and int(sip.first.split()[1])>=200:
+                self.cleanup.pop(cid)
+                return True
+        entry = self.invites.get((cid,seq)) if method=='INVITE' else None
+        if not entry or not entry['abandoned'] or entry['remote']!=remote:
+            return False
+        status = int(sip.first.split()[1])
+        if status<200:
+            return True
+        original = SIP.parse(entry['wire'])
+        headers = {'Via':original.headers['via'] if status>=300 else f'SIP/2.0/UDP {self.own}:5060;branch=z9hG4bK{tag()}',
+            'From':original.headers['from'],'To':sip.headers['to'],'Call-ID':cid,'CSeq':seq+' ACK'}
+        uri = original.first.split()[1] if status>=300 else f'sip:{remote}:5060'
+        self.send(wire(f'ACK {uri} SIP/2.0',headers),remote)
+        if status<300 and not entry['closed']:
+            entry['closed'] = True
+            headers['Via'] = f'SIP/2.0/UDP {self.own}:5060;branch=z9hG4bK{tag()}'
+            headers['CSeq'] = str(int(seq)+1)+' BYE'
+            headers['Content-Type'] = 'text/plain'
+            data = wire(f'BYE {uri} SIP/2.0',headers,'reason:1')
+            self.send(data,remote)
+            self.cleanup[cid] = {'wire':data,'remote':remote,'seq':str(int(seq)+1),
+                'method':'BYE','deadline':self.clock()+16,'next':self.clock()+.5,'delay':.5}
+        return True
 
     def receive(self, data, remote):
         if remote not in self.panels:
@@ -114,6 +164,8 @@ class Signaling:
         method = sip.first.split()[0]
         cid = sip.headers['call-id']
         seq, cseq_method = sip.headers['cseq'].split()
+        if method=='SIP/2.0' and self.retired_response(sip,remote,cid,seq,cseq_method):
+            return
         cache_key = (remote, cid, sip.headers.get('via'), sip.headers['cseq'])
         if method != 'SIP/2.0' and cache_key in self.cache:
             self.send(self.cache[cache_key][1], remote)
@@ -192,6 +244,14 @@ class Signaling:
 
     def tick(self):
         now = self.clock()
+        self.invites = {k:v for k,v in self.invites.items() if v['expires']>now}
+        for cid, pending in list(self.cleanup.items()):
+            if now>=pending['deadline']:
+                self.cleanup.pop(cid)
+            elif now>=pending['next']:
+                self.send(pending['wire'],pending['remote'])
+                pending['delay'] = min(4,pending['delay']*2)
+                pending['next'] = now+pending['delay']
         self.cache = {k:v for k,v in self.cache.items() if v[0] > now}
         if self.pending:
             p = self.pending

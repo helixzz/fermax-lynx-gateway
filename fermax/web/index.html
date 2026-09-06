@@ -6,7 +6,8 @@
 <section class="card policy"><span class="eyebrow">来访设置</span><h2>自动开门</h2><p id="autoState">已关闭</p><label>持续时间<select id="duration"><option value="15">15 分钟</option><option value="30">30 分钟</option><option value="60">1 小时</option><option value="120">2 小时</option><option value="240">4 小时</option><option value="480">8 小时</option><option value="720">12 小时</option><option value="0">无时限</option></select></label><div class="controls"><button id="enableAuto" class="primary">启用</button><button id="disableAuto">关闭</button></div><p class="muted">启用后，本户收到门铃呼叫且门口机允许开门时自动执行。设置会在重启后保留。</p><hr><button id="showSettings">设备与密码设置</button><button id="logout" class="quiet">退出登录</button></section></div>
 <section id="settings" class="card" hidden><h2>设备与密码设置</h2>
 <form id="configForm"><h3>住户身份与网络</h3><div class="settingsGrid">
-<label>楼号／单元号<input name="building" required maxlength="48"></label>
+<label>楼宇显示名称<input name="building" required maxlength="48"></label>
+<label>楼号／单元号（协议编号）<input name="block" type="number" min="0" max="99" required></label>
 <label>门牌号<input name="unit" required maxlength="48"></label>
 <label>分机号<input name="extension" type="number" min="0" max="7" required></label>
 <label>室内机静态 IP<input name="monitor_ip" required></label>

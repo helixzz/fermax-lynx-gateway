@@ -51,3 +51,36 @@ class SIPLiveTests(unittest.TestCase):
     def test_unconfigured_peer_ignored(self):
         self.sip.receive(self.invite,'192.0.2.30')
         self.assertEqual(self.out,[])
+
+    def test_timeout_sends_cancel_and_acks_late_rejection(self):
+        self.sip.preview('192.0.2.20')
+        invite = SIP.parse(self.out[-1][0])
+        self.now[0]=17
+        self.sip.tick()
+        cancel=SIP.parse(self.out[-1][0])
+        self.assertTrue(cancel.first.startswith('CANCEL '))
+        self.assertEqual(cancel.headers['via'],invite.headers['via'])
+        headers={k:invite.headers[k] for k in ('via','from','to','call-id','cseq')}
+        self.sip.receive(wire('SIP/2.0 487 Request Terminated',headers),'192.0.2.20')
+        ack=SIP.parse(self.out[-1][0])
+        self.assertTrue(ack.first.startswith('ACK '))
+        self.assertEqual(ack.headers['via'],invite.headers['via'])
+
+    def test_late_acceptance_cleaned_without_affecting_new_call(self):
+        self.sip.preview('192.0.2.20')
+        old=SIP.parse(self.out[-1][0])
+        self.sip.hangup()
+        self.sip.preview('192.0.2.20')
+        current=self.sip.dialog.cid
+        headers={k:old.headers[k] for k in ('via','from','to','call-id','cseq')}
+        headers['to']+=';tag=late-panel'
+        reply=wire('SIP/2.0 200 OK',headers)
+        self.sip.receive(reply,'192.0.2.20')
+        ack,bye=[SIP.parse(data) for data,_ in self.out[-2:]]
+        self.assertTrue(ack.first.startswith('ACK '))
+        self.assertTrue(bye.first.startswith('BYE '))
+        self.assertEqual(bye.headers['call-id'],old.headers['call-id'])
+        self.assertEqual(self.sip.dialog.cid,current)
+        self.sip.receive(reply,'192.0.2.20')
+        self.assertTrue(SIP.parse(self.out[-1][0]).first.startswith('ACK '))
+        self.assertEqual(sum(SIP.parse(data).first.startswith('BYE ') for data,_ in self.out),1)

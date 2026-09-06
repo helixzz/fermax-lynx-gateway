@@ -28,6 +28,11 @@ def files():
     enum=f.enum_type.add(name='PanelOpenDoorResultEnum')
     enum.value.add(name='PANEL_OPEN_DOOR_RESULT_OK',number=0)
     enum.value.add(name='PANEL_OPEN_DOOR_RESULT_ERROR',number=1)
+    protocol=f.enum_type.add(name='SIPProtocol')
+    for number,name in enumerate(('STANDARD','LYNX','PUSH')):
+        protocol.value.add(name=name,number=number)
+    message('IPAddressProtocol',[(1,'ip_address',9,False,None),(2,'protocol',14,False,'SIPProtocol'),
+                                 (4,'delete',8,False,None),(5,'extension',5,False,None)])
     definitions = [
         ('Command','panelGetRelaysCommand',1301,[(1,'doormatic',8,False,None)]),
         ('Response','panelGetRelaysResponse',1301,[(1,'relayTags',9,True,None)]),
@@ -39,6 +44,8 @@ def files():
         ('Response','sessionKeepAliveResponse',2301,[(1,'state',8,False,None)]),
         ('Event','panelCapabilitiesEvent',1300,[(1,'openDoorEnable',8,False,None)]),
         ('Command','pushDeviceCallCommand',3005,[(1,'pushType',9,False,None),(2,'ip',9,False,None)]),
+        ('Event','notifyIPProtocolEvent',3003,[(1,'ipAdresses',11,True,'IPAddressProtocol'),
+            (2,'block',5,False,None),(3,'unit',9,False,None),(4,'gateway',9,False,None)]),
     ]
     for parent,name,number,fields in definitions:
         child=name[0].upper()+name[1:]

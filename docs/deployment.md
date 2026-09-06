@@ -12,7 +12,7 @@ sudo -u fermax python3 -m fermax.admin --state-dir /var/lib/fermax password
 
 Edit `/var/lib/fermax/config.json` with real site values; keep it mode 600 and owned by fermax. Install your own protocol key at `/var/lib/fermax/edk`, also mode 600. The web UI supports the same configuration fields, but changes require restarting the service. Never commit these files.
 
-`building`, `unit` and `extension` are identity/display settings; `unit` is also used in the SIP User-Agent. `monitor_ip` is explicit and is used for bind addresses, SIP addressing and SDP. No universal IP calculator or building-directory provisioning is implemented. Set the OS static address to match before starting. The building interface must have no default route; route home and Internet traffic through `home_interface`. Do not enable forwarding between these interfaces.
+`building` is a display label. Numeric `block` (0–99), `unit` and `extension` are used in periodic LYNX identity announcements to configured panels; `unit` also appears in the SIP User-Agent. `monitor_ip` is explicit and is used for bind addresses, SIP addressing and SDP. No universal IP calculator or building-directory provisioning is implemented. Set the OS static address to match before starting. The building interface must have no default route; route home and Internet traffic through `home_interface`. Do not enable forwarding between these interfaces.
 
 ```sh
 sudo install -m 644 deploy/fermax-gateway.service /etc/systemd/system/

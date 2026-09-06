@@ -10,6 +10,7 @@ from pathlib import Path
 from .media import Video
 from .sip_live import Signaling
 from .transport import Transport
+from .identity import Announcer
 
 class Controller:
     def __init__(self, state, codec):
@@ -96,6 +97,9 @@ class Controller:
         self.hosts.append(self.client)
         for port in (52102, 56102, 57703):
             self.hosts.append(Transport(self.codec, port=port, bind=self.own, allowed=self.panels.values()))
+        publisher=Transport(self.codec,bind=self.own,allowed=self.panels.values())
+        self.hosts.append(publisher)
+        self.announcer=Announcer(publisher,self.codec,self.state.config,self.state.event)
         self.sip = Signaling(self.own, self.panels.values(), self.send_sip, self.notify, unit=self.state.config['unit'])
         with self.state.lock:
             self.state.network = 'ready'
@@ -248,6 +252,7 @@ class Controller:
             except ValueError as error:
                 self.state.event(str(error), 'control_failed', {'request_id':request_id})
         self.sip.tick()
+        self.announcer.tick()
         self.service_operations()
 
     def run(self):

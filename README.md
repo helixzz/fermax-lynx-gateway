@@ -6,7 +6,7 @@ A self-hosted Linux gateway for a compatible FERMAX VIVO / LYNX installation. It
 
 ## Features
 
-- Configurable building/unit label, apartment number, extension, monitor IP, network interfaces and up to eight entrance panels. No real residence information is embedded in the source.
+- Configurable building label, numeric block ID, apartment number, extension, monitor IP, network interfaces and up to eight entrance panels. No real residence information is embedded in the source.
 - Incoming-call video and on-demand previews, dynamic door permission/relay queries, manual opening, automatic opening and hangup.
 - Persistent automatic-open timers, including unlimited duration; automatic opening applies only to incoming calls and attempts once per call.
 - Single-user web password changes, salted PBKDF2 hashes, revocable sessions, separate API tokens and command-line password recovery.
@@ -58,6 +58,8 @@ python3 -m fermax.admin --state-dir /var/lib/fermax api-token
 The new token is written to `api-token`; it is not printed. The HTTP service is intended for a trusted LAN. HTTPS is not built in; deployment behind a reverse proxy needs a separate HTTPS/origin/cookie configuration change. Do not expose this development HTTP endpoint directly to the Internet.
 
 ## API and roadmap
+
+Proposals: [Webhook #1](https://github.com/helixzz/fermax-lynx-gateway/issues/1) and [MCP #2](https://github.com/helixzz/fermax-lynx-gateway/issues/2).
 
 See [API](docs/api.md), [protocol scope](docs/protocol.md) and [roadmap](docs/roadmap.md). Webhook and MCP plans are proposals only; the gateway does not send event data to external services.
 
