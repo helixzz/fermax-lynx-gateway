@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fermax-lynx-gateway"
+version = "0.1.0"
+description = "Experimental local Linux gateway for compatible LYNX video intercoms"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = ["protobuf>=3.20", "pycryptodome>=3.18", "Pillow>=9"]
+
+[project.scripts]
+fermax-gateway = "fermax.main:main"
+fermax-admin = "fermax.admin:main"
+
+[tool.setuptools.packages.find]
+include = ["fermax*"]
+
+[tool.setuptools.package-data]
+fermax = ["web/*.html", "web/*.js", "web/*.css"]

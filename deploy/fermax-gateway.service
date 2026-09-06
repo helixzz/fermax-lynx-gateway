@@ -1,0 +1,22 @@
+[Unit]
+Description=LYNX local intercom gateway
+After=network.target
+
+[Service]
+Type=simple
+User=fermax
+Group=fermax
+WorkingDirectory=/opt/fermax-lynx-gateway
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m fermax.main --state-dir /var/lib/fermax
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/fermax
+PrivateTmp=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

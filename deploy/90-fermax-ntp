@@ -1,0 +1,4 @@
+#!/bin/sh
+case "$2" in
+  up|down|dhcp4-change|reapply) exec /usr/bin/python3 /usr/local/lib/fermax-ntp.py "$1" ;;
+esac

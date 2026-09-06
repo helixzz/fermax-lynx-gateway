@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LYNX · 门禁</title><link rel="stylesheet" href="/style.css"><script defer src="/app.js"></script><script defer src="/settings.js"></script></head>
+<body><header><div><span class="eyebrow">FERMAX GATEWAY</span><h1 id="identity">我的门禁</h1></div><div class="clock"><strong id="clock">--:--:--</strong><span id="clockSource">等待对时状态</span></div></header>
+<main><section id="login" class="card"><h2>连接你的门禁</h2><p>输入网关访问密码，查看来访和管理门锁。</p><form id="loginForm"><label>访问密码<input id="password" type="password" autocomplete="current-password" required></label><button>登录</button></form></section>
+<div id="workspace" hidden><div class="columns"><section class="card viewer"><div class="sectionHead"><h2 id="callState">等待来访</h2><span id="network" class="badge">连接中</span></div><div class="video"><img id="video" alt="门口机实时画面" hidden><p id="videoHint">选择门口机查看视频</p></div><div class="controls"><span id="panelButtons" class="controls"></span><button data-action="answer" id="answer" disabled>接听</button><button data-action="open" id="open" class="primary" disabled>开门</button><button data-action="hangup" id="hangup" disabled>挂断</button></div><p class="muted" id="audioNote">远程语音尚未启用；视频、开门和挂断可独立使用</p><p id="notice" role="status"></p></section>
+<section class="card policy"><span class="eyebrow">来访设置</span><h2>自动开门</h2><p id="autoState">已关闭</p><label>持续时间<select id="duration"><option value="15">15 分钟</option><option value="30">30 分钟</option><option value="60">1 小时</option><option value="120">2 小时</option><option value="240">4 小时</option><option value="480">8 小时</option><option value="720">12 小时</option><option value="0">无时限</option></select></label><div class="controls"><button id="enableAuto" class="primary">启用</button><button id="disableAuto">关闭</button></div><p class="muted">启用后，本户收到门铃呼叫且门口机允许开门时自动执行。设置会在重启后保留。</p><hr><button id="showSettings">设备与密码设置</button><button id="logout" class="quiet">退出登录</button></section></div>
+<section id="settings" class="card" hidden><h2>设备与密码设置</h2>
+<form id="configForm"><h3>住户身份与网络</h3><div class="settingsGrid">
+<label>楼号／单元号<input name="building" required maxlength="48"></label>
+<label>门牌号<input name="unit" required maxlength="48"></label>
+<label>分机号<input name="extension" type="number" min="0" max="7" required></label>
+<label>室内机静态 IP<input name="monitor_ip" required></label>
+<label>门禁网络接口<input name="building_interface" required maxlength="15"></label>
+<label>家庭网络接口<input name="home_interface" required maxlength="15"></label>
+<label>网站端口<input name="web_port" type="number" min="1024" max="65535" required></label></div>
+<label>门口机列表（JSON；每项包含 id、name、ip）<textarea name="panels" rows="8" required spellcheck="false"></textarea></label>
+<p class="muted">IP 请以现场配置为准。此处不会修改 Linux 网卡地址；保存后需在服务器重启网关服务。屏幕显示前两个门口机，网页显示全部。</p>
+<button>保存设备配置</button><p id="configStatus" role="status"></p></form><hr>
+<form id="passwordForm"><h3>修改访问密码</h3><div class="settingsGrid">
+<label>当前密码<input name="current_password" type="password" autocomplete="current-password" required></label>
+<label>新密码（12–128 字符）<input name="new_password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+<label>重复新密码<input name="confirm_password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label></div>
+<button>修改密码并退出登录</button><p class="muted">忘记密码时，可在服务器运行 python -m fermax.admin password 重置。无需多用户账户。</p></form></section>
+<section class="card journal"><div class="sectionHead"><div><span class="eyebrow">EVENT JOURNAL</span><h2>事件记录</h2></div><a href="/v1/logs/export" class="button">导出完整 CSV</a></div><div class="filters"><select id="kind"><option value="">所有事件</option><option value="incoming">门铃呼入</option><option value="open_auto">自动开门</option><option value="open_manual">手动开门</option><option value="open_unknown">开门结果未知</option><option value="auto_changed">自动模式设置</option><option value="protocol_error">通信错误</option></select><button id="refreshLogs">刷新</button></div><div class="tableWrap"><table><thead><tr><th>时间</th><th>事件</th><th>详情</th></tr></thead><tbody id="events"></tbody></table></div><button id="older">加载更早记录</button></section></div><p id="error" role="alert"></p></main><footer>本地网关 · LYNX</footer></body></html>

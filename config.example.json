@@ -1,0 +1,16 @@
+{
+  "building": "Example building",
+  "unit": "0101",
+  "extension": 0,
+  "monitor_ip": "192.0.2.10",
+  "building_interface": "eth0",
+  "home_interface": "wlan0",
+  "web_port": 8765,
+  "panels": [
+    {
+      "id": "entrance",
+      "name": "Entrance",
+      "ip": "192.0.2.20"
+    }
+  ]
+}

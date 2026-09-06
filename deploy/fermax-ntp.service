@@ -1,0 +1,11 @@
+[Unit]
+Description=Select DHCP or fallback NTP for FERMAX gateway
+After=NetworkManager.service systemd-timesyncd.service
+Wants=systemd-timesyncd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/fermax-ntp.py
+
+[Install]
+WantedBy=multi-user.target
