@@ -76,6 +76,21 @@ class PhoneTests(unittest.TestCase):
         self.assertIsNone(restored.renew(grant))
         self.assertIsNone(Devices(Auth(self.folder)).renew(grant))
 
+    def test_continuous_renewal_beyond_one_day_keeps_sessions_bounded(self):
+        now = [0.]
+        self.devices.clock = lambda:now[0]
+        grant, session, device = self.grant()
+        for _ in range(400):
+            now[0] += 240
+            self.assertIsNotNone(self.devices.authorized(session))
+            session, renewed = self.devices.renew(grant)
+            self.assertEqual(renewed['id'], device['id'])
+            self.assertLessEqual(len(self.devices.sessions), 2)
+        self.assertGreater(now[0], 86400)
+        self.devices.revoke(device['id'])
+        self.assertIsNone(self.devices.authorized(session))
+        self.assertIsNone(self.devices.renew(grant))
+
     def test_grants_store_only_digest_and_cannot_authorize_admin(self):
         grant, session, _ = self.grant()
         content = (self.folder/'phone-devices.json').read_text()

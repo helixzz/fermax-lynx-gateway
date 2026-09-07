@@ -96,6 +96,7 @@
     if (automatic) { lastAutoResult = automatic.id; message('自动开门：门口机已确认。'); }
     if (pending) {
       const outcome = state.events.find(event => event.id > pending.after && event.call_id === pending.call &&
+        (event.kind === 'call_ended' || event.request_id === pending.id) &&
         (pending.action === 'open' ? ['open_manual','open_denied','open_unknown','control_failed'].includes(event.kind) :
           ['call_ended','control_failed'].includes(event.kind)));
       if (outcome) { message(eventNames[outcome.kind]); pending = null; }
@@ -193,12 +194,13 @@
     const call = state.call_id;
     const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
     const id = Array.from(bytes, b => b.toString(16).padStart(2,'0')).join('');
-    pending = {action, call, after:Math.max(0,...state.events.map(event => event.id)), time:performance.now()};
+    pending = {id, action, call, after:Math.max(0,...state.events.map(event => event.id)), time:performance.now()};
     buttons(); message('请求已提交，等待网关结果…');
     try {
       await request('/v1/phone/control', {action,panel,call_id:call,request_id:id});
-      if (action === 'preview') { pending = null; message('预览请求已排队，等待画面。'); }
+      if (pending && pending.id === id && action === 'preview') { pending = null; message('预览请求已排队，等待画面。'); }
     } catch (error) {
+      if (!pending || pending.id !== id) return;
       pending = null;
       if (error.status === 401) await setup(error.message);
       else message(error.status ? error.message : '操作结果未知；不会自动重试，请核对当前状态。');

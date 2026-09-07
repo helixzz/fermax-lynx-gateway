@@ -72,6 +72,9 @@ gets at most one device-renewal attempt before a new snapshot. Rejected device
 renewal (401/403) stops retries and requires enrollment. Controls are never replayed.
 Open/hangup require the current call ID at admission and again in the controller
 queue. Persisted request IDs deduplicate requests; 202 means queued, not physical opening.
+Manual opening outcomes carry the request ID through the controller queue to the
+scoped event summary. A page only resolves its pending action from a matching
+request/call pair; another client's outcome remains a recent activity.
 
 ## Limitations and validation
 
@@ -91,12 +94,15 @@ python3 -m unittest discover -s tests -v
 PYTHON=python3 node tests/phone_browser.cjs
 ```
 
-`PLAYWRIGHT_MODULE`, `BROWSER_EXECUTABLE`, and `SCREENSHOT_DIR` select local browser
+`BROWSER_ENGINE` (default `chromium`, also `webkit`), `PLAYWRIGHT_MODULE`,
+`BROWSER_EXECUTABLE`, and `SCREENSHOT_DIR` select local browser
 test tools/output. The smoke test launches a synthetic loopback fixture and covers
 enrollment, privilege separation, wake touch, preview, incoming display, one opening
-request, refresh/offline/restart recovery, revocation and portrait layout. It never
+request, another client's result, three scheduled renewals using the browser clock,
+refresh/offline/restart recovery, revocation and portrait layout. It never
 contacts a building network.
 
 Old iPadOS 15 Safari, real tablet sound/autoplay, 72-hour foreground operation and
-seven-day observation remain outstanding. Synthetic clock advancement tests device
-renewal beyond 24 hours; it does not establish real-device endurance.
+seven-day observation remain outstanding. Synthetic clock advancement tests 400
+consecutive four-minute device renewals beyond 24 hours and verifies that retained
+sessions stay bounded; it does not establish real-device endurance.

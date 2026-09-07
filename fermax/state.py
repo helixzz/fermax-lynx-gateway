@@ -178,7 +178,7 @@ class State:
             result['video_ready'] = permitted and full['video_ready']
             result['allow_open'] = permitted and full['allow_open'] and bool(full['relays'])
             result['events'] = [
-                {k:e[k] for k in ('id','time','kind')} | {'call_id':e['detail'].get('call_id')}
+                {k:e[k] for k in ('id','time','kind')} | {k:e['detail'].get(k) for k in ('call_id','request_id')}
                 for e in self.logs(limit=30)
                 if e['kind'] in ('incoming','outgoing','call_ended','open_manual','open_auto',
                                  'open_unknown','open_denied','control_failed')

@@ -38,7 +38,7 @@ class ControllerTests(unittest.TestCase):
         c.sip.dialog.acked = False
         c.last_keep = 0
         c.client.peers = {(c.remote,52102):object(),(c.remote,57703):object()}
-        c.operations.append(('panelGetRelaysCommand', {'doormatic':False}, 'panelGetRelaysResponse', 'relays'))
+        c.operations.append(('panelGetRelaysCommand', {'doormatic':False}, 'panelGetRelaysResponse', 'relays', None))
         c.service_operations()
         c.client.request.assert_not_called()
         self.assertEqual(len(c.operations), 1)
@@ -77,6 +77,30 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.state.logs(limit=1)[0]['kind'], 'open_denied')
         self.c.result('open_manual', SimpleNamespace(error=None, result={'result':'PANEL_OPEN_DOOR_RESULT_OK'}))
         self.assertEqual(self.state.logs(limit=1)[0]['kind'], 'open_manual')
+
+    def test_manual_request_id_survives_queue_and_all_outcomes(self):
+        c = self.c
+        self.state.call_id, self.state.panel_id = 'synthetic-call', 'hall'
+        for response, error, kind in [
+            ({'result':'PANEL_OPEN_DOOR_RESULT_OK'}, None, 'open_manual'),
+            ({'result':'DENIED'}, None, 'open_denied'),
+            (None, 'timeout', 'open_unknown'),
+        ]:
+            with self.subTest(kind=kind):
+                self.state.allow_open, self.state.relays = True, ['relay']
+                pending = SimpleNamespace(result=None, error=None)
+                c.client.peers = {(c.remote,52102):object()}
+                c.client.request.return_value = pending
+                c.open(request_id='synthetic-request')
+                c.service_operations()
+                pending.result, pending.error = response, error
+                c.service_operations()
+                event = self.state.phone_snapshot(['hall'])['events'][0]
+                self.assertEqual(event['kind'], kind)
+                self.assertEqual(event['request_id'], 'synthetic-request')
+                self.assertEqual(event['call_id'], 'synthetic-call')
+                self.assertFalse(c.operations)
+                self.assertIsNone(c.pending_op)
 
     def test_ending_removes_stale_peers_before_next_call(self):
         c = self.c

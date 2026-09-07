@@ -23,6 +23,8 @@ def main():
         state.network = 'ready'
         state.clock_status['synchronized'] = True
         actions = []
+        held_requests = []
+        hold_open = False
         image = Image.new('RGB',(640,360),'#486254')
         draw = ImageDraw.Draw(image)
         draw.rectangle((210,40,420,350), fill='#d9ddc3')
@@ -53,7 +55,9 @@ def main():
                 actions.append(action)
                 if action == 'preview': incoming('outgoing')
                 elif action == 'hangup': end()
-                elif action == 'open': state.event('Synthetic confirmation','open_manual')
+                elif action == 'open':
+                    if hold_open: held_requests.append(request_id)
+                    else: state.event('Synthetic confirmation','open_manual', {'request_id':request_id})
 
         state.controller = FakeController()
         auth = Auth(folder)
@@ -65,6 +69,12 @@ def main():
                 command = json.loads(line)['command']
                 if command == 'incoming': incoming()
                 elif command == 'end': end()
+                elif command == 'hold_open': hold_open = True
+                elif command == 'other_result':
+                    state.event('Synthetic other client', 'open_denied', {'request_id':'other-client-request'})
+                elif command == 'complete_open':
+                    state.event('Synthetic confirmation', 'open_manual', {'request_id':held_requests.pop(0)})
+                    hold_open = False
                 elif command == 'revoke':
                     for device in auth.devices.list(): auth.devices.revoke(device['id'])
                 elif command == 'reset_password': set_password(folder,'new-synthetic-password')
