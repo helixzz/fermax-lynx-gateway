@@ -1,6 +1,6 @@
 # Ringtone library · 铃声来源与编排
 
-This development branch contains 16 short, AI-assisted project-original scores,
+Version 0.4.0 contains 16 short, AI-assisted project-original scores,
 released with the project under [MIT](../LICENSE). They are locally synthesized
 instrumental phrases, not recordings downloaded from an AI music service. No
 third-party song, recording, artist voice or sampled instrument is bundled.

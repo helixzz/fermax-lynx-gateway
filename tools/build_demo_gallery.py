@@ -53,8 +53,8 @@ def main():
     for item in images.values():
         if hashlib.sha256((folder/item['file']).read_bytes()).hexdigest() != item['sha256']:
             raise SystemExit('Image hash mismatch: '+item['file'])
-    intro = ('这些后续开发版预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
-             'Screenshots show the development version after 0.3.0 using synthetic data.')
+    intro = ('这些 v0.4.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
+             'Screenshots show version 0.4.0 using synthetic data.')
     markdown = ['# 界面图集 · Interface gallery', intro,
                 '[中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)',
                 '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。']

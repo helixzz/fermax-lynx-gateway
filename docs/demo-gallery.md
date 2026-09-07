@@ -1,6 +1,6 @@
 # 界面图集 · Interface gallery
 
-这些后续开发版预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show the development version after 0.3.0 using synthetic data.
+这些 v0.4.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show version 0.4.0 using synthetic data.
 
 [中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)
 

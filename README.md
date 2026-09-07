@@ -10,7 +10,7 @@ controls you need within reach. Runs on Linux, with an optional Raspberry Pi dis
 
 ![Incoming video fills a landscape tablet, with large translucent controls along the bottom. Original synthetic entrance illustration; no camera footage.](docs/demo/phone-incoming.webp)
 
-*Development preview after v0.3.0: the 16-track library and revised administrator layout are not in the v0.3.0 release.
+*Version 0.4.0 includes the 16-track library and revised administrator layout.
 See [changelog](CHANGELOG.md) for release scope.
 All images use synthetic data and an original illustrated entrance.*
 

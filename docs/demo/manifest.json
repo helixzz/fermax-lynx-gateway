@@ -8,7 +8,7 @@
     "fermax/web/app.js": "b1a2f13b463af99f8066ab55a48b6bc2a9b722108ef0972200831f02d900185e",
     "fermax/web/ringtones.json": "dd8f357f0cdb9fcc419752992570747a8a1ab1d4d2ac015c9ee2e8c4296e27e4",
     "tests/phone_fixture.py": "d9b3990b034209838e2283d10351b1580dcd8284b3c6fce0f61890a2b51fcdad",
-    "tests/phone_experience.cjs": "81297be3856fb0857c3e411c090ed9455e245df86e14316dfc27e32b5c616d1e",
+    "tests/phone_experience.cjs": "e4cbed036cd49b61d59dd63c3c330ab7cb2808624eec944be5c783ffbaa4b4cb",
     "fermax/web/phone.html": "4fe22ad1c4f50e762b021c586d6b4399edf7cd72dd8481f4908eed36be8e5c45",
     "fermax/web/phone.css": "959eecd0aa9f8572130bd0a946ac7cb7540bad1317d62428b9e9439d43a442dc",
     "fermax/web/phone.js": "2cf186b4324d154712e580b9f110fc01c6ab5374eef3797e231e5ec971c07e5e",
@@ -16,7 +16,7 @@
     "fermax/web/ringtone.js": "ec007604da55c6f9dd3bfb033d7245623b936bd097017fc87dc1aafa65c03efd",
     "fermax/web/index.html": "0fcb79f89f44a9883516a420ae1bd139b62318a75adbf944efcdad209b6101a8",
     "fermax/web/style.css": "de290f6de82042b19f8fcce90baae69119d110d9800f5f52f0ee3da1b0ad0517",
-    "fermax/web/settings.js": "4e82fb0c3ae20c0830a26cab223a6f4e6af46fa9a9926b714ac5d4c6bef58653"
+    "fermax/web/settings.js": "e57a80b95622c86e7d702f0381b14e61a51e71637f90379e18cc2332fde5c4df"
   },
   "images": [
     {
@@ -85,7 +85,7 @@
     },
     {
       "file": "clock-analog.webp",
-      "sha256": "2afb7b8f9da41430acc4a42a0925868529b68d5586e66a4a3e1781e0631349c9"
+      "sha256": "4ddd442f106c266a88fd0becd9a094a6d4843a0eae3653e71760de32a51bf386"
     },
     {
       "file": "clock-nixie.webp",

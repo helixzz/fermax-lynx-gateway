@@ -2,8 +2,8 @@
 
 [Home](../README.md) · [中文完整手册](user-guide.zh-CN.md) · [Every screen](demo-gallery.md)
 
-This guide covers the development branch after v0.3.0. The 16-track library and
-revised administrator layout are not yet in that tagged release. All previews use synthetic data;
+This guide covers v0.4.0, including the 16-track library and revised administrator layout.
+All previews use synthetic data;
 check the [changelog](../CHANGELOG.md) before choosing a release. UI labels are Chinese.
 
 ## Install and connect

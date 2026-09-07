@@ -95,8 +95,7 @@ document.querySelector('#passwordForm').addEventListener('submit',async event=>{
     const value=Object.fromEntries(new FormData(form));
     if(value.new_password!==value.confirm_password)throw Error('两次新密码不一致');
     await api('/v1/password',{current_password:value.current_password,new_password:value.new_password});
-    form.reset();settingsPanel.hidden=true;logged=false;
-    document.querySelector('#workspace').hidden=true;document.querySelector('#login').hidden=false;
+    form.reset();logoutView();
     error(Error('密码已修改，请使用新密码登录。其他网页会话也已退出。'));
   }catch(e){error(e)}finally{button.disabled=false}
 });

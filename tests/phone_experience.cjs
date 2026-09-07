@@ -125,6 +125,20 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await context.setOffline(false);await scenario('end');await page.locator('#idle').waitFor({state:'visible'});
     await login(admin);await admin.locator('#showSettings').click();await admin.locator('[data-setting=phoneDevicesSettings]').click();await admin.locator('#deviceList li').waitFor({state:'visible'});await shot(admin,'admin-devices','#phoneDevicesSettings');
     await scenario('revoke');await page.locator('#setup').waitFor({state:'visible'});await shot(page,'phone-revoked');
+    // Password rotation logs out through the same layout reset as explicit logout.
+    await admin.locator('[data-setting=passwordForm]').click();
+    await admin.locator('[name=current_password]').fill('synthetic-phone-password');
+    await admin.locator('[name=new_password]').fill('synthetic-updated-password');
+    await admin.locator('[name=confirm_password]').fill('synthetic-updated-password');
+    await admin.locator('#passwordForm button').click();
+    await admin.locator('#login').waitFor({state:'visible'});
+    // Stay in the same document: navigation would conceal the hidden-overview regression.
+    await admin.locator('#password').fill('synthetic-updated-password');
+    await admin.locator('#loginForm button').click();
+    await admin.locator('#overview').waitFor({state:'visible'});
+    assert.equal(await admin.locator('.journal').isVisible(),true);
+    assert.equal(await admin.locator('#settings').isVisible(),false);
+    assert.equal(await admin.locator('#showSettings').getAttribute('aria-expanded'),'false');
     assert.deepEqual(errors,[]);assert.ok(count>0);
     if(directory){const sources={};for(const file of ['fermax/state.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
     console.log(engine+' PASS: admin music upload/settings, four clocks, preferences, 4:3 full viewport, ring expiry, mute, portrait/mobile, stale video, offline and revoked demos');

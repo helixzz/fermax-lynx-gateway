@@ -79,7 +79,7 @@ These checks do not establish iPadOS 15 hardware compatibility, audible speaker 
 72-hour foreground endurance, physical door effects or background ringing. Those
 remain field acceptance items in Issue #3.
 
-## Administrator follow-up (development after v0.3.0)
+## Administrator follow-up (v0.4.0)
 
 The old phone link was an inline anchor with vertical padding. Its painted height
 exceeded its line box, overlapping the settings button by 15 CSS pixels at tested

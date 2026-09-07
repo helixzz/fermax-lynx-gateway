@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-09-07
 
 - Sixteen locally synthesized original ringtone scores with grouped selection, audition and source/license records.
 - State-driven administrator automatic-opening controls; enabled policies expose only Stop.
