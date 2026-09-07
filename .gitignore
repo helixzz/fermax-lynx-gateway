@@ -30,3 +30,6 @@ PacketCaptures/
 Analysis/
 Documents/
 tmp/
+
+phone-preferences.json
+phone-music/

@@ -1,0 +1,125 @@
+{
+  "kind": "synthetic-ui-demo",
+  "browser": "chromium",
+  "source_sha256": {
+    "fermax/state.py": "6df32cff755289f651fce4aa87a25b4a47622711540461dde90f065c09ca9833",
+    "fermax/phone_preferences.py": "6837cd6a66727ac5d74da506530d355a3b34f61c254f9a4e96ed22c1847f3772",
+    "fermax/api.py": "ca3259a4bf25ba373f35663f54610d54ccba88e0b93ed27cb204135c4eaea841",
+    "tests/phone_fixture.py": "8c9554b49ed0e3504a97f0b10ff4cd59e0849e3abfe9e2b3380f96256da93492",
+    "tests/phone_experience.cjs": "8188229beee9eea6743147972d919e214899e669509b6ae75c71c9cbb1ca1567",
+    "fermax/web/phone.html": "d7b44a1cf5cc3c49221040e9ac2fcd986ec3d38fb34dc0265fd344be345ecf3d",
+    "fermax/web/phone.css": "959eecd0aa9f8572130bd0a946ac7cb7540bad1317d62428b9e9439d43a442dc",
+    "fermax/web/phone.js": "d3728b8d5dbb483b4e2ac3e3909b57f1dd4b79e715792751aaf2d2096ad1a56d",
+    "fermax/web/clock.js": "0e9ead066de1444a73145fce0cc847fd6dadca7d838cde71c07ca2451128f667",
+    "fermax/web/ringtone.js": "fcc235b419402eed4b0ffdaa35a08fb454d257ff2eae1daad62e88157fee6d5e",
+    "fermax/web/index.html": "3aeb66c3ab48819a66d36191aac2082f7d3ec1f4dba4f75140e8663c15110d80",
+    "fermax/web/style.css": "3b669d71440ace60955cf75fe0f30752f9980dc15899d3de0795aad21f808fff",
+    "fermax/web/settings.js": "f3db2fa4de0dcc0621b00b0d7e59e93773a43291a68ea7b8c5f9080773331c31"
+  },
+  "images": [
+    {
+      "file": "admin-login.webp",
+      "sha256": "f288e6f99d63cad57a0dd3be51f2467e7b1a46b451625481515e9a928f7e1651"
+    },
+    {
+      "file": "admin-dashboard.webp",
+      "sha256": "24cd8f763444f2e2d196e15b0cce875780d1ed55c5d7b4bebf67f37ed4c67ee3"
+    },
+    {
+      "file": "admin-ringtone.webp",
+      "sha256": "5a4d89faa5545db43cb5c80fa084a3f895851b2580350a403e05b68926754dca"
+    },
+    {
+      "file": "admin-network.webp",
+      "sha256": "bf0ba8312452fef93aa873fe38196aea1ad29bc70cd48f9b245ade79b347fcc2"
+    },
+    {
+      "file": "admin-password.webp",
+      "sha256": "e1f13cd7909e2397c65e2eb6effbd2ae85496d39ff14846bc49250bd3b8e7db1"
+    },
+    {
+      "file": "admin-journal.webp",
+      "sha256": "c1c59fa28dace668e7155c5bbae4444a48a3feb04c99e54c5dbd89fccde319a1"
+    },
+    {
+      "file": "admin-custom-music.webp",
+      "sha256": "7eeb9ce374f7087cb4e0f9257bd54a74c8884faa4c4f9ea0bcf6fa784a6256fe"
+    },
+    {
+      "file": "phone-enrollment.webp",
+      "sha256": "a882663cf115ac603e7e56ca01d564cf2bb68a2971ca7677b7dabc4cedbf457c"
+    },
+    {
+      "file": "clock-editorial.webp",
+      "sha256": "9eed6f933a43c4c81f47161c0e5159cbc88c02f30e876d0e8939b2d883925ebc"
+    },
+    {
+      "file": "clock-digital.webp",
+      "sha256": "873b19957b56f77a34decaa49763d9b1fa53ca9d85860e90cc6c8e5efa9c1f3b"
+    },
+    {
+      "file": "clock-analog.webp",
+      "sha256": "a61e017eb417c20cd34a0bbecfec77ef13c5ea5b30ca967304c087de922a22eb"
+    },
+    {
+      "file": "clock-nixie.webp",
+      "sha256": "3f6333777dafdbee8042a1e2b6d8e54a68ba59ea93407c206405b7089d953a6a"
+    },
+    {
+      "file": "clock-nixie-quiet.webp",
+      "sha256": "19f2cd6960dc9445686d5ca723e8e6ef3f8ac591b4518e4b37e0cf4272441b31"
+    },
+    {
+      "file": "phone-preferences.webp",
+      "sha256": "bfdad4136346dffffa2ba3d42584b7b60ac960101eca0f68b1b5990038e4f061"
+    },
+    {
+      "file": "phone-recent.webp",
+      "sha256": "713d619d781cc2f7c93d657b2c43ef7736426880c1cdac8f58e2fc023ba54899"
+    },
+    {
+      "file": "phone-preview.webp",
+      "sha256": "6082637b275f9f57d6dba5790785d334c92dc7bc889b003fdb5b05d73b81c0b3"
+    },
+    {
+      "file": "phone-incoming.webp",
+      "sha256": "e5eabc178de31f509219a37958bb20be4ea562002005d541ae220504ed72c414"
+    },
+    {
+      "file": "phone-ring-ended.webp",
+      "sha256": "4a6a72ca6d329843061332a5078f02ad78f773f9475740eae1d569d952b196c3"
+    },
+    {
+      "file": "phone-muted.webp",
+      "sha256": "bc83eb15457d23623b442087b0fb31e83645f46a277a7b95269a5b3cf5a4ccf7"
+    },
+    {
+      "file": "phone-portrait.webp",
+      "sha256": "b7c6dd7d7f481b0d7786d6a8c44db0750402180522a7c7a834b5edb153ec7fcb"
+    },
+    {
+      "file": "phone-mobile.webp",
+      "sha256": "cfc0ade01f949a2c966dd492ff10552fce41668589d9c8de81fec0dd0e8d72ea"
+    },
+    {
+      "file": "phone-wide.webp",
+      "sha256": "adc1d62d7c5baacf58306e41c0eb78b18c59127c000db2f2c905bdc97c841b1c"
+    },
+    {
+      "file": "phone-stale-video.webp",
+      "sha256": "f9c2e3f02195499e953d334c31bb985123cd3cb44c508429f470df9b8a9e2940"
+    },
+    {
+      "file": "phone-offline.webp",
+      "sha256": "01f019ee47d0d669c4804ad3b916fca9d94f8ea43e12f6bc79cad4fb64cdc4d5"
+    },
+    {
+      "file": "admin-devices.webp",
+      "sha256": "10d57daa1895a684e9e2623effd9619b92e7d37d2aad5cd443664498a3c8129c"
+    },
+    {
+      "file": "phone-revoked.webp",
+      "sha256": "a5582d148c43e11ca955b83f03eb55af7c33c3bd1b53d8b7b62a10dca08d3bd5"
+    }
+  ]
+}

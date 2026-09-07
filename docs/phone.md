@@ -1,7 +1,7 @@
 # Tablet phone mode
 
 The `/phone` page provides a foreground clock, incoming video, panel preview,
-manual opening, hangup, a synthesized ringtone and three recent activities.
+manual opening, hangup, configurable looping music and three recent activities.
 It uses the existing single-call gateway. Two-way voice and answering arbitration
 remain separate; the page does not present video as an answered call.
 
@@ -45,6 +45,7 @@ is a separate prerequisite for HTTPS deployment, not inferred from forwarded hea
 | POST `/v1/phone/session/logout` | Device cookie; revokes grant, clears both cookies |
 | GET `/v1/phone/state` | Short session; scoped full snapshot |
 | GET `/v1/phone/events` | Short session; SSE snapshots and 15-second heartbeats |
+| GET `/v1/phone/ringtone` | Short session; current or active-call pinned WAV revision |
 | GET `/v1/phone/frame.jpg` | Short session; current permitted panel's fresh JPEG |
 | POST `/v1/phone/control` | Short session; `action`, `panel`, `call_id`, `request_id` |
 
@@ -106,3 +107,42 @@ Old iPadOS 15 Safari, real tablet sound/autoplay, 72-hour foreground operation a
 seven-day observation remain outstanding. Synthetic clock advancement tests 400
 consecutive four-minute device renewals beyond 24 hours and verifies that retained
 sessions stay bounded; it does not establish real-device endurance.
+
+## Display and ringing preferences
+
+See the illustrated [user guide](user-guide.md), [中文手册](user-guide.zh-CN.md),
+[complete demo gallery](demo-gallery.md), and [design decisions](phone-design.md).
+
+Each browser stores clock style (editorial, digital, analog, nixie), seconds mode
+(hidden, step, sweep) and volume locally. These cosmetic preferences contain no
+credentials. Reduced motion changes the analog sweep to ticking.
+
+Administrators choose three built-in melodies or custom music, with a
+15/30/45/60-second loop window (default 30). Browser imports decode audio up to
+60 seconds and 10 MB, then convert it to mono PCM WAV. The server accepts only
+bounded 16-bit PCM WAV and removes metadata. Back up `phone-preferences.json` and
+`phone-music/` with other private state; neither belongs in Git.
+
+Snapshots expose `phone_preferences`, active-call `ring_preferences`, and
+monotonic `call_age` in seconds. Incoming/outgoing call creation captures the
+ring settings; updates take effect on the next call. An active call pins its
+custom music revision so refreshes can still load it after another upload.
+Elapsed call time is excluded from change detection; clients advance it locally
+between snapshots. A refresh never starts a new ring window. Ring expiry only
+stops music; it does not hang up. Muting, disconnecting, hiding the page, ending
+a call or revoking the device also stops pending/playing music.
+
+The video fills the viewport using `object-fit: contain`; a 4:3 source is never
+cropped. Compact controls float over it, with letterboxing when necessary.
+
+```sh
+node tests/ringtone.cjs
+PYTHON=python3 node tests/phone_experience.cjs
+# Export actual UI screenshots from synthetic data:
+PYTHON=python3 DEMO_DIR=docs/demo node tests/phone_experience.cjs
+python3 tools/build_demo_gallery.py
+```
+
+The experience test supports the browser selection variables above. Its manifest
+records source and image SHA-256 hashes. Screenshots are static demos and do not
+establish physical-device or production readiness.

@@ -49,3 +49,5 @@ For console handoff, install `deploy/console.py` as root-owned `/usr/local/lib/f
 ## Upgrade from the private prototype
 
 The public implementation does not migrate plaintext credentials automatically. Preserve private state, create a validated config.json, run the password command and rotate the API token. Neither the old token nor a protocol key should enter Git. The application uses the minimal schema included in Python source and no longer needs the full vendor descriptor file.
+
+Phone music settings live in `phone-preferences.json` and `phone-music/` under the private state directory. Include both in backups alongside device grants and existing gateway state.

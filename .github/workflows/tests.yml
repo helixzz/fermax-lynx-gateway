@@ -13,3 +13,5 @@ jobs:
           sudo apt-get install -y python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av python3-evdev
       - name: Public test suite
         run: /usr/bin/python3 -m unittest discover -s tests -v
+      - name: Ringtone playback lifecycle
+        run: node tests/ringtone.cjs

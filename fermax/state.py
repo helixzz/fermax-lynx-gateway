@@ -31,6 +31,10 @@ class State:
         self.folder = Path(folder)
         self.folder.mkdir(parents=True, exist_ok=True)
         self.config = validate(config or EXAMPLE)
+        from .phone_preferences import PhonePreferences
+        self.phone_preferences = PhonePreferences(self.folder)
+        self.call_started_mono = None
+        self.call_ring_preferences = None
         self.path = self.folder/'policy.json'
         self.db = sqlite3.connect(self.folder/'events.sqlite3', check_same_thread=False)
         self.db.row_factory = sqlite3.Row
@@ -70,6 +74,13 @@ class State:
 
     def event(self, text, kind='info', detail=None):
         with self.lock:
+            if kind in ('incoming','outgoing') and self.call_id:
+                self.call_started_mono = self.mono()
+                self.call_ring_preferences = self.phone_preferences.capture_call()
+            elif kind == 'call_ended':
+                self.call_started_mono = None
+                self.call_ring_preferences = None
+                self.phone_preferences.end_call()
             detail = dict(detail or {})
             if self.call_id:
                 detail.setdefault('call_id', self.call_id)
@@ -164,7 +175,9 @@ class State:
                     'time':self.wall(), 'local_time':datetime.fromtimestamp(self.wall()).isoformat(),
                     'utc_offset':datetime.fromtimestamp(self.wall()).astimezone().utcoffset().total_seconds(),
                     'clock':dict(self.clock_status), 'video_ready':self.video_jpeg is not None and self.mono()-self.video_updated < 5,
-                    'audio_available':False}
+                    'ring_preferences':dict(self.call_ring_preferences) if self.call_id and self.call_ring_preferences else None,
+                    'audio_available':False, 'phone_preferences':self.phone_preferences.snapshot(),
+                    'call_age':max(0,self.mono()-self.call_started_mono) if self.call_id and self.call_started_mono is not None else 0}
 
     def phone_snapshot(self, panels):
         """Small, scoped projection. Never expose configuration or raw event detail."""
@@ -172,7 +185,7 @@ class State:
             full = self.snapshot()
             permitted = self.panel_id is None or self.panel_id in panels
             result = {k:full[k] for k in ('network', 'call', 'call_id', 'panel', 'panel_id',
-                      'direction', 'auto', 'time', 'local_time', 'utc_offset', 'audio_available')}
+                      'direction', 'auto', 'time', 'local_time', 'utc_offset', 'audio_available', 'phone_preferences', 'ring_preferences', 'call_age')}
             result['clock_synchronized'] = full['clock']['synchronized']
             result['panels'] = [p for p in full['panels'] if p['id'] in panels]
             result['video_ready'] = permitted and full['video_ready']
@@ -185,7 +198,7 @@ class State:
                 and e['detail'].get('panel_id') in panels
             ][:3]
             if not permitted:
-                result.update(call='busy', call_id=None, panel=None, panel_id=None, direction=None)
+                result.update(call='busy', call_age=0, ring_preferences=None, call_id=None, panel=None, panel_id=None, direction=None)
             return result
 
     def stream_snapshot(self, panels):
@@ -193,7 +206,7 @@ class State:
             snapshot = self.phone_snapshot(panels)
             # Version describes global state, not a particular device's projection.
             full = self.snapshot()
-            signature = json.dumps({k:v for k,v in full.items() if k not in ('time','local_time')}, sort_keys=True)
+            signature = json.dumps({k:v for k,v in full.items() if k not in ('time','local_time','call_age')}, sort_keys=True)
             if signature != self.stream_signature:
                 self.stream_signature = signature
                 self.stream_version += 1
