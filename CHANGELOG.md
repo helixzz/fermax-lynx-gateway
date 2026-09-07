@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3
+
+- Request foreground phone screen wake lock independently of sound, with stop/retry and accurate support/state feedback.
+- Release on hiding/leaving/sign-out and recover on return, handling late requests without retry loops.
+- Explain trusted HTTPS and Safari/Home Screen requirements; HTTP deployments still require system auto-lock settings.
+
 ## 0.6.2
 
 - Enlarge all four standby clocks to use tablet width and height, with extra space when seconds are hidden.

@@ -182,3 +182,13 @@ Safari 的支持随系统版本而异：iPadOS 16.4 起提供标准 Fullscreen A
 常驻 iPad / iPhone 推荐：Safari 分享 → 添加到主屏幕 → 从新图标打开。页面声明 Apple 独立窗口模式，可减少地址栏和工具栏占用。主屏幕窗口可能不共享原 Safari 的设备会话，必要时在该窗口重新登录管理员并授权话机。独立窗口不等于防锁屏，仍需调整系统自动锁定；后台响铃不保证。
 
 参考：[WebKit Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/)、[Apple 独立窗口说明](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html)。
+
+## 保持亮屏与 iPad 自动锁定
+
+进入已授权话机后，前台页面独立申请保持亮屏，不需要启用或试听铃声。操作面板显示实际状态，可停止或重试；隐藏、离开或退出话机时释放，返回前台重新申请。系统释放或拒绝后不会不断重试。
+
+**局域网普通 HTTP 地址不能使用标准保持亮屏接口。** 需要受浏览器信任的 HTTPS 和支持该接口的系统；忽略证书警告不等于建立可信连接。Safari 16.4 引入该接口，主屏幕 Web App 的支持问题在18.4修复。全屏、添加到主屏幕与保持亮屏是不同功能；低电量或系统策略仍可能拒绝申请。
+
+不满足条件时，页面明确说明原因。可在 iPad **设置 → 显示与亮度 → 自动锁定 → 永不**（如可选）调整；网页不能替你修改系统设置。后台或手动锁屏仍不保证响铃。
+
+参考：[Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/)、[Safari 18.4](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/)、[Wake Lock规范](https://www.w3.org/TR/screen-wake-lock/)。

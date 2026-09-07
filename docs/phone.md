@@ -83,8 +83,8 @@ Video still uses JPEG snapshots; this is not a new streaming media pipeline. Sta
 frames are indicated, and old images removed on disconnect/call changes. The clock
 follows gateway time/UTC offset and marks unsynchronized or offline time.
 
-Dark idle mode dims page content, not backlight. Wake Lock is requested only when
-supported in a secure context; otherwise use system auto-lock settings. Background
+Dark idle mode dims page content, not backlight. Wake Lock is requested independently of sound for an enrolled foreground phone
+when supported in a secure context; otherwise use system auto-lock settings. Background
 or locked-screen ringing is not promised. No microphone is accessed.
 Platform references: [SSE framing/connection limits](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events),
 [Wake Lock requirements](https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API).
@@ -170,3 +170,13 @@ For iPad/iPhone: Safari **Share → Add to Home Screen**, then launch the new ic
 Sources: [Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/), [Fullscreen user activation](https://fullscreen.spec.whatwg.org/), [Apple standalone configuration](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html).
 
 `PYTHON=python3 node tests/phone_screen.cjs` checks synthetic standard/legacy capability, rejected requests, missing APIs, external exit, standalone state, user gestures and tablet/phone clock bounds. Browser API mocks validate handling, not physical iPad support.
+
+## Screen wake lock and auto-lock
+
+An enrolled foreground phone requests a screen wake lock independently of sound or a ringtone preview. The controls panel reports the actual state and offers stop/retry. Hiding, leaving or signing out releases the lock; returning to the foreground re-acquires it. System release or rejection does not create an automatic retry loop.
+
+**Ordinary LAN HTTP cannot use the standard API.** A trusted HTTPS connection and browser support are required; bypassing a certificate warning is not equivalent to trust. Safari 16.4 introduced Screen Wake Lock, and Home Screen web app support was fixed in 18.4. Fullscreen and Home Screen installation do not themselves prevent auto-lock. Battery or system policies may still deny a request.
+
+Unsupported/insecure pages display the reason instead of claiming success. On iPad, use Settings → Display & Brightness → Auto-Lock → Never, if available. A website cannot change that system setting. Background or manually locked-screen ringing remains unsupported.
+
+Sources: [Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/), [Safari 18.4](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/), [Wake Lock specification](https://www.w3.org/TR/screen-wake-lock/).
