@@ -1,10 +1,28 @@
 # 界面图集 · Interface gallery
 
-这些 v0.5.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show version 0.5.0 using synthetic data.
+这些开发版预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show the development UI using synthetic data.
 
 [中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)
 
 下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。
+
+## 今日活动 · Daily activity
+
+来电与协议确认开门，按网关本地日期汇总。
+
+![今日活动 · Daily activity](demo/admin-statistics.webp)
+
+## 待机统计 · Quiet activity
+
+图标与数字，轻触或聚焦显示统计口径。
+
+![待机统计 · Quiet activity](demo/phone-statistics.webp)
+
+## 实体首页统计 · LCD daily activity
+
+保持大按钮，简明显示今日来电与确认开门。
+
+![实体首页统计 · LCD daily activity](demo/lcd-home.webp)
 
 ## 网关独立响铃 · Gateway sound
 

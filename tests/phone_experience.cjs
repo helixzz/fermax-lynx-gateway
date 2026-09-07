@@ -53,6 +53,9 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     for(const [width,height] of [[1024,768],[768,1024],[390,844],[844,390]]){await admin.setViewportSize({width,height});await noOverlap();}
     await admin.setViewportSize({width:1024,height:768});await admin.evaluate(()=>document.body.style.zoom='2');await noOverlap();await shot(admin,'admin-zoom');await admin.evaluate(()=>document.body.style.zoom='');
     assert.equal(await admin.locator('#autoSetup').isVisible(),true);assert.equal(await admin.locator('#disableAuto').isVisible(),false);
+    assert.equal(await admin.locator('#statsIncoming').textContent(),'0');
+    await scenario('stats_seed');await admin.waitForFunction(()=>document.querySelector('#statsIncoming').textContent==='7');
+    assert.equal(await admin.locator('#statsOpenings').textContent(),'4');await shot(admin,'admin-statistics','.adminStats');
     await admin.locator('#duration').selectOption('15');await admin.locator('#enableAuto').click();await admin.waitForFunction(()=>document.querySelector('#autoState').textContent.includes('限时'));
     assert.equal(await admin.locator('#autoSetup').isVisible(),false);await shot(admin,'admin-auto-timed');
     await scenario('auto_expire');await admin.locator('#autoSetup').waitFor({state:'visible'});
@@ -93,7 +96,7 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await scenario('audio_restore');await admin.waitForFunction(()=>document.querySelector('#gatewayAudioDevices li'));
     await admin.locator('#gatewayOutput').selectOption('auto');await admin.locator('#saveGatewayAudio').click();
     await admin.waitForFunction(()=>document.querySelector('#gatewayAudioFeedback').textContent.includes('已保存'));
-    if(directory)for(const command of ['lcd_settings','lcd_sound','lcd_outputs']){
+    if(directory)for(const command of ['lcd_home','lcd_settings','lcd_sound','lcd_outputs']){
       await scenario(command);const file=command.replaceAll('_','-')+'.webp';captured.push({file,sha256:hash(fs.readFileSync(path.join(directory,file)))});
     }
     await admin.locator('[data-setting=phoneMusicSettings]').click();await admin.locator('#ringtoneChoice').waitFor({state:'visible'});
@@ -127,6 +130,27 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await page.locator('#wakeSurface').click();await page.locator('#secondsMode').selectOption('hidden');await page.locator('#hideControls').click();await shot(page,'clock-nixie-quiet');
     await page.reload();await page.locator('#phone').waitFor({state:'visible'});assert.equal(await page.locator('#clockStyle').inputValue(),'nixie');assert.equal(await page.locator('#secondsMode').inputValue(),'hidden');
     await page.locator('#enableSound').click();await page.locator('#clockStyle').selectOption('editorial');await shot(page,'phone-preferences','#controls');
+    assert.equal(await page.locator('#todayIncoming').textContent(),'8');
+    assert.equal(await page.locator('#todayOpenings').textContent(),'4');
+    await page.locator('#hideControls').click();await page.locator('#todayOpenings').focus();
+    assert.ok((await page.locator('#todayOpenings').getAttribute('aria-label')).includes('协议确认'));await page.evaluate(()=>document.querySelector('#message').textContent='');await shot(page,'phone-statistics');
+    await scenario('stats_unavailable');await page.waitForFunction(()=>document.querySelector('#todayIncoming').textContent==='—');
+    await scenario('stats_restore');await page.waitForFunction(()=>document.querySelector('#todayIncoming').textContent==='8');
+    await scenario('stats_large');await page.waitForFunction(()=>document.querySelector('#todayIncoming').textContent==='12345');
+    for(const [width,height] of [[1024,768],[768,1024],[390,844],[844,390]]){
+      await page.setViewportSize({width,height});
+      for(const zoom of ['', '2']){
+        await page.evaluate(zoom=>document.body.style.zoom=zoom,zoom);
+        for(const id of ['todayIncoming','todayOpenings','gatewayStatus','networkStatus','autoStatus','soundStatus']){
+          await page.locator('#'+id).focus();
+          assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'focused '+id+' '+width+' '+zoom);
+        }
+      }
+    }
+    await page.evaluate(()=>document.body.style.zoom='');await page.setViewportSize({width:1024,height:768});
+    await context.setOffline(true);await page.waitForFunction(()=>document.querySelector('#todayIncoming').textContent==='—');
+    await context.setOffline(false);await scenario('stats_restore');await page.waitForFunction(()=>document.querySelector('#todayIncoming').textContent==='8');
+    await page.locator('#wakeSurface').click();
     await page.locator('#hideControls').click();await page.locator('#wakeSurface').click();await page.locator('.recent summary').click();await shot(page,'phone-recent','#controls');await page.locator('.recent summary').click();assert.deepEqual((await scenario('inspect')).actions,[]);
     await page.locator('#panels button').first().click();await page.locator('#picture').waitFor({state:'visible'});await shot(page,'phone-preview');await page.locator('#hangup').click();await page.locator('#idle').waitFor({state:'visible'});
     await scenario('incoming');await page.locator('#picture').waitFor({state:'visible'});await page.waitForFunction(()=>window.__soundEvents.some(e=>e.kind==='stop' && e.remaining>20));
@@ -168,7 +192,7 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     assert.equal(await admin.locator('#settings').isVisible(),false);
     assert.equal(await admin.locator('#showSettings').getAttribute('aria-expanded'),'false');
     assert.deepEqual(errors,[]);assert.ok(count>0);
-    if(directory){const sources={};for(const file of ['fermax/gateway_audio.py','fermax/display.py','fermax/web/gateway-audio.js','fermax/state.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
+    if(directory){const sources={};for(const file of ['fermax/gateway_audio.py','fermax/display.py','fermax/web/gateway-audio.js','fermax/state.py','fermax/statistics.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
     console.log(engine+' PASS: admin music upload/settings, four clocks, preferences, 4:3 full viewport, ring expiry, mute, portrait/mobile, stale video, offline and revoked demos');
   }finally{if(browser)await browser.close();fixture.stdin.end();const timer=setTimeout(()=>fixture.kill('SIGTERM'),3000);if(fixture.exitCode===null)await once(fixture,'exit');clearTimeout(timer);lines.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

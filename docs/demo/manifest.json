@@ -3,56 +3,65 @@
   "browser": "chromium",
   "source_sha256": {
     "fermax/gateway_audio.py": "f44d0d76d9c6b28bacc392ca14647c60e9f81f3dafa9167b28eeaea3844e7414",
-    "fermax/display.py": "7c4d2da62f1aced56b289e5e18b0af495b58e72dfc3ee0578201bc890d0849b5",
+    "fermax/display.py": "6db7a255dc775e9e7187cdf292aa05893c4f30e434653571a02b137af8088b40",
     "fermax/web/gateway-audio.js": "c16f6073b8715083a0e1f585803d9833782f7a46c35ee9bacb259de26e3a7aec",
-    "fermax/state.py": "cc2c02aff99427e7bf07c885db769c4d6dd4c14362be5592899bfa5d2e04aec1",
+    "fermax/state.py": "3ccc33276bcd4e6a247a88a93b050b5404a6c23dfbc97655d698e3ad838182e0",
+    "fermax/statistics.py": "d3f676da77700a44e3e77d3501dff6e74297fbf51c6f547ad2aa8c7342689981",
     "fermax/phone_preferences.py": "138a9816795d5ded2b56d2c6ade1844287c552e2f80739bdda3abd630c532f3d",
     "fermax/api.py": "b9bb964d0c8aa05b32f773e4b12837939b008d5924f7c85039eda015d29ef9d1",
-    "fermax/web/app.js": "b1a2f13b463af99f8066ab55a48b6bc2a9b722108ef0972200831f02d900185e",
+    "fermax/web/app.js": "ab404ad7e8e82f59b5ffe0f74a1e78260a677a3e67a4a4a8017e9c0034018b6b",
     "fermax/web/ringtones.json": "dd8f357f0cdb9fcc419752992570747a8a1ab1d4d2ac015c9ee2e8c4296e27e4",
-    "tests/phone_fixture.py": "32237752eaf3ee3004345a31c8493f0d21ba85a27b9e6239d37d336c6bdf4611",
-    "tests/phone_experience.cjs": "91a332cc5a01074c7408d7a02ce5d03c08b3acc4309e3671f65069503ecc8ba9",
-    "fermax/web/phone.html": "4fe22ad1c4f50e762b021c586d6b4399edf7cd72dd8481f4908eed36be8e5c45",
-    "fermax/web/phone.css": "959eecd0aa9f8572130bd0a946ac7cb7540bad1317d62428b9e9439d43a442dc",
-    "fermax/web/phone.js": "2cf186b4324d154712e580b9f110fc01c6ab5374eef3797e231e5ec971c07e5e",
+    "tests/phone_fixture.py": "f33435b823a5146b38e6900ebb6546b11f8b078c75ad5118b6385de50755670a",
+    "tests/phone_experience.cjs": "c7da4872bf1236f4d6c664bd3cdf25388a2d6cf40402b13087caa85186730d52",
+    "fermax/web/phone.html": "5936b61a88a799cb043d4183138bebc4eb6928fc0baacf2ceb570ce6fc459100",
+    "fermax/web/phone.css": "55fa4317d46b7c78cf70106e406f7c33606f8ff07bc599d8523d0c8ccefbac42",
+    "fermax/web/phone.js": "97a36d0147506f70719dbd92f903857d949dd8c6a23e9891d9881afff8290ba3",
     "fermax/web/clock.js": "0e9ead066de1444a73145fce0cc847fd6dadca7d838cde71c07ca2451128f667",
     "fermax/web/ringtone.js": "ec007604da55c6f9dd3bfb033d7245623b936bd097017fc87dc1aafa65c03efd",
-    "fermax/web/index.html": "17f3bf6c6f45290f79dec69c6992efb923e6603441cf526dfe86d0ad233a8f67",
-    "fermax/web/style.css": "44b511e73583236e215b3d276b09ccc280ff2fd304fd9559c598e17e81b2d134",
+    "fermax/web/index.html": "b33ae87385ad3e6332564cbca3b565935b8a8325c60220058c04ff527dfbe840",
+    "fermax/web/style.css": "6d0ae784d6be3f7b87a4c2f9fc3504d6dd0fcdee77f5c4a44ba332af9659e8fc",
     "fermax/web/settings.js": "10096e80439b42575de7dc04febe04c4c62aa1c7dfa52e5b2f4d433fb1d9b95d"
   },
   "images": [
     {
       "file": "admin-login.webp",
-      "sha256": "a1907780363667d8983b18788f71f998be5e9536d9710ea768a13010c61d3319"
+      "sha256": "91832a58be1ab00503741a8030e2bd75c0ba18fc8c4b15f9eafa97d69c8a61f1"
     },
     {
       "file": "admin-dashboard.webp",
-      "sha256": "011079ecc9750388f8c09d87201fef3cfbaa69d7b0cca28a84e058890d0342e1"
+      "sha256": "87c54250ca9e5fce4b6bcdd52a91d7b657423174f63b5d77217d75f358fe5603"
     },
     {
       "file": "admin-zoom.webp",
-      "sha256": "a51ec66494c872baa95fcb6e2fae7b2eb0a688c05a3c622d31c453cb2a82ac5b"
+      "sha256": "eface6caf696bdfd3d47306257f8aa7495395a8bc84d1f1dfd442efc6d0cf4ea"
+    },
+    {
+      "file": "admin-statistics.webp",
+      "sha256": "6b372880ec2ca8f38670c65a5430674728c0e5b662d7651b00b5aba481078935"
     },
     {
       "file": "admin-auto-timed.webp",
-      "sha256": "3e6f514789fdfa4f7e6549b2cbf737f3811d883b0f4b2b44848e29f1971b0d3f"
+      "sha256": "f7158080ec52307f047c76c1c5cd9a163b3a25dbf0d7f36c3ca0cc73b19b55a9"
     },
     {
       "file": "admin-auto-unlimited.webp",
-      "sha256": "b8973438a8ce05b5123ccb2c28374dfbee66968546434ccc2132a38aa5fd7665"
+      "sha256": "6e41fe479584b92729a15dbbd0fa8066de9400b181fcb75bb92db100b9bfad6d"
     },
     {
       "file": "admin-offline.webp",
-      "sha256": "675d5002db76afa41c88c71d73fee7b00bab8584ba7e051dafcef90d600eca5f"
+      "sha256": "7c2adb36f67db63884a24d1f39224994936c3c612252583ec3429bba8a36abb5"
     },
     {
       "file": "admin-gateway-sound.webp",
-      "sha256": "c706946fdfad9204268f364234aa217c7df7ed694b7d5e438234e7db7aa035ce"
+      "sha256": "f74e51ba6796120255f7d16683f9b39cd877a22993247b32710598c0057eae67"
     },
     {
       "file": "admin-gateway-no-device.webp",
-      "sha256": "9b0baab7401998feb7cc1d6d94451a0c6c74fbd956224ecb2c235643dbe825de"
+      "sha256": "f3ef7d2d93bd90dce14a9be4790367e062387f7e5c72a374a9bc852f2e669a70"
+    },
+    {
+      "file": "lcd-home.webp",
+      "sha256": "b5e8ad246757986a6f17b63b796004f56eb0be5fe87a6e3104e211e1c8c5a866"
     },
     {
       "file": "lcd-settings.webp",
@@ -68,107 +77,111 @@
     },
     {
       "file": "admin-settings.webp",
-      "sha256": "dbbe5a42ac7b1aca2bcca57754b3bff558ea8e252741f015682b15f44c98136e"
+      "sha256": "4a0280f5b6d7835f8af1011ba7033892f652a6254bebab2fad01e95cafa047a0"
     },
     {
       "file": "admin-ringtone.webp",
-      "sha256": "146cc1e9f7f0077860e29b14b1246dabe27f9164e029667cf2fad8655827a6ab"
+      "sha256": "47d6e41f561e2b10f091201fe800b3fb1b82528715dc78054b4766b688970690"
     },
     {
       "file": "admin-ringtone-library.webp",
-      "sha256": "25411987b200dba3b2d00c70ca350a6dc5055518f4f2d5112bad1aecc71ccc52"
+      "sha256": "4b8e2ae12585c1e461124c5026243d3ed25c146f227e8ac28ea14fd537160058"
     },
     {
       "file": "admin-network.webp",
-      "sha256": "11c7893c3c3122e33433be0716ea3605c249ed81123a95f386013c5e31c419f7"
+      "sha256": "e2bd4846331670ec99afb807f118e9ed8d83862fcc7f79c3e3a2d9b06501eb53"
     },
     {
       "file": "admin-password.webp",
-      "sha256": "8236c7174791d8a51d4a564dc58108630db982d36b3ba4323590808a0595b74b"
+      "sha256": "df1c41f76d4e914b34fc408aac3bf5af00d37ffe42630b1a8823e961c49556ed"
     },
     {
       "file": "admin-journal.webp",
-      "sha256": "79234092677244756a3ca254d04d87d3e37af6a8aa3d9dc37a2079ba72d1b8e4"
+      "sha256": "b6de50fa9021d43baf9b5656c141dc011193e01c3d397d520c962f8145001f21"
     },
     {
       "file": "admin-custom-music.webp",
-      "sha256": "0dc4e8061628dfb46f4f6cd20be0b1e08e6fcda6e3c8eea0ea36ceb852137c45"
+      "sha256": "b2cf8319ffc504c14006775cc90329cb02b8b6281e0c54d73965da534bda1067"
     },
     {
       "file": "phone-enrollment.webp",
-      "sha256": "a882663cf115ac603e7e56ca01d564cf2bb68a2971ca7677b7dabc4cedbf457c"
+      "sha256": "4af0a40a0456d4409f9aaaea86a3c55881c7e38f4004118052c5cd398e3d1ba8"
     },
     {
       "file": "clock-editorial.webp",
-      "sha256": "9eed6f933a43c4c81f47161c0e5159cbc88c02f30e876d0e8939b2d883925ebc"
+      "sha256": "aef9986cce75e490a93e9da8879f1d5e1698c5680e110b1873e316a6dc0e27e4"
     },
     {
       "file": "clock-digital.webp",
-      "sha256": "873b19957b56f77a34decaa49763d9b1fa53ca9d85860e90cc6c8e5efa9c1f3b"
+      "sha256": "527f4664d4238446f3b3def5a00bf3a026882ceb2b94a0cd74c3b179e17de743"
     },
     {
       "file": "clock-analog.webp",
-      "sha256": "42df2e444a5d5491919bb9df09e16bab628e1ba924971fb54ddeac3e385633c3"
+      "sha256": "28a2332ee6ee1ada081366f9a2f0f8219eb66493e7cddf81956837bbce232bb2"
     },
     {
       "file": "clock-nixie.webp",
-      "sha256": "3f6333777dafdbee8042a1e2b6d8e54a68ba59ea93407c206405b7089d953a6a"
+      "sha256": "4610397e385096f0aadbbab088399942163ac030b03e3713bcd4f939f7cb5691"
     },
     {
       "file": "clock-nixie-quiet.webp",
-      "sha256": "19f2cd6960dc9445686d5ca723e8e6ef3f8ac591b4518e4b37e0cf4272441b31"
+      "sha256": "c6737da564d50223144334c7a86be8a7ac47e4bb388682552a85e7fed65f8df5"
     },
     {
       "file": "phone-preferences.webp",
-      "sha256": "bfdad4136346dffffa2ba3d42584b7b60ac960101eca0f68b1b5990038e4f061"
+      "sha256": "aa95ce30e1508f4350c621144e13ce2273ab6fedcf55624481b2560f16a1bdcd"
+    },
+    {
+      "file": "phone-statistics.webp",
+      "sha256": "4a45e04fe2bb006112c2c58ae634360a62e357f47d0246fb6b407abf345118de"
     },
     {
       "file": "phone-recent.webp",
-      "sha256": "713d619d781cc2f7c93d657b2c43ef7736426880c1cdac8f58e2fc023ba54899"
+      "sha256": "9c4101cf8880b16afd59a71ddd4ae788acb1a2591062004c5fbddd1af4d525b5"
     },
     {
       "file": "phone-preview.webp",
-      "sha256": "6082637b275f9f57d6dba5790785d334c92dc7bc889b003fdb5b05d73b81c0b3"
+      "sha256": "5063e1b2fc684d2b45077cae76aa84a6623ef2019646d39beb8ae89c6fe32508"
     },
     {
       "file": "phone-incoming.webp",
-      "sha256": "e5eabc178de31f509219a37958bb20be4ea562002005d541ae220504ed72c414"
+      "sha256": "ccf4b7f84ad892935b460a8029ce2a764a452168eba2b69212d219785282870c"
     },
     {
       "file": "phone-ring-ended.webp",
-      "sha256": "4a6a72ca6d329843061332a5078f02ad78f773f9475740eae1d569d952b196c3"
+      "sha256": "ccf4b7f84ad892935b460a8029ce2a764a452168eba2b69212d219785282870c"
     },
     {
       "file": "phone-muted.webp",
-      "sha256": "bc83eb15457d23623b442087b0fb31e83645f46a277a7b95269a5b3cf5a4ccf7"
+      "sha256": "aba6fb370d4d9faffe14cc630983b2365e497e821090d6c6bf8028fffa32bc4f"
     },
     {
       "file": "phone-portrait.webp",
-      "sha256": "b7c6dd7d7f481b0d7786d6a8c44db0750402180522a7c7a834b5edb153ec7fcb"
+      "sha256": "f01296569f3ae27ad10e15a82a28e29be5a27e667e1d60795ad3528ca9552cc4"
     },
     {
       "file": "phone-mobile.webp",
-      "sha256": "cfc0ade01f949a2c966dd492ff10552fce41668589d9c8de81fec0dd0e8d72ea"
+      "sha256": "55110309ce8c539acd16a4c9a36f354c47815e8270a9430f04d504edf94aec34"
     },
     {
       "file": "phone-wide.webp",
-      "sha256": "adc1d62d7c5baacf58306e41c0eb78b18c59127c000db2f2c905bdc97c841b1c"
+      "sha256": "010c3df7312dcd69192dbe6c3417aa8555795f5263f2f2fc9f137e1ca29c78c7"
     },
     {
       "file": "phone-stale-video.webp",
-      "sha256": "f9c2e3f02195499e953d334c31bb985123cd3cb44c508429f470df9b8a9e2940"
+      "sha256": "931677dfac8146dcab71b70878e8496e023245809025dfc6de386f4554fd160a"
     },
     {
       "file": "phone-offline.webp",
-      "sha256": "01f019ee47d0d669c4804ad3b916fca9d94f8ea43e12f6bc79cad4fb64cdc4d5"
+      "sha256": "dd5ec45c93299481c07914e0bb378e56aa80f468f054f88a3dd1d48b603e1e8c"
     },
     {
       "file": "admin-devices.webp",
-      "sha256": "3f19d342e018199d6952f25044749d3a1516ec4a7386b3c2e5c467b3b3bfef30"
+      "sha256": "e507de28d3c05dbd21676891443a58dc95ea38c3ae0de45ac40493f6889abece"
     },
     {
       "file": "phone-revoked.webp",
-      "sha256": "a5582d148c43e11ca955b83f03eb55af7c33c3bd1b53d8b7b62a10dca08d3bd5"
+      "sha256": "ab41933ba0503776c80d058a91842d6cb746e73ed2e41685b12ef7d029a65c8d"
     }
   ]
 }

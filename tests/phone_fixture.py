@@ -114,7 +114,17 @@ def main():
         try:
             for line in sys.stdin:
                 command = json.loads(line)['command']
-                if command == 'incoming': incoming()
+                if command == 'stats_seed':
+                    for i in range(7): state.event('Synthetic daily visit','incoming',{'call_id':'daily-'+str(i),'panel_id':EXAMPLE['panels'][0]['id']})
+                    for i in range(4): state.event('Synthetic daily confirmation','open_manual',{'request_id':'daily-open-'+str(i),'panel_id':EXAMPLE['panels'][0]['id']})
+                elif command == 'stats_unavailable': state.statistics.available=False
+                elif command == 'stats_large':
+                    state.statistics.snapshot(state.wall())
+                    state.statistics.cache=(state.statistics.cache[0],[('incoming',EXAMPLE['panels'][0]['id'],12345),('openings',EXAMPLE['panels'][0]['id'],123456)])
+                elif command == 'stats_restore':
+                    state.statistics.available=True
+                    state.statistics.cache=None
+                elif command == 'incoming': incoming()
                 elif command == 'end': end()
                 elif command == 'expire_ring':
                     state.call_started_mono -= 61
@@ -138,7 +148,7 @@ def main():
                     from fermax.display import Display
                     display=Display(state,folder,framebuffer='/dev/null',font_path=os.environ.get('DEMO_FONT'))
                     display.coeff=[[1,0,0],[0,1,0]]
-                    display.page={'lcd_settings':'settings','lcd_sound':'sound','lcd_outputs':'outputs'}[command]
+                    display.page={'lcd_home':'home','lcd_settings':'settings','lcd_sound':'sound','lcd_outputs':'outputs'}[command]
                     display.render().save(str(Path(os.environ['DEMO_DIR'])/(command.replace('_','-')+'.webp')),'WEBP',quality=88)
                 elif command == 'other_result':
                     state.event('Synthetic other client', 'open_denied', {'request_id':'other-client-request'})

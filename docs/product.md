@@ -58,3 +58,9 @@ LYNX Gateway 把兼容门禁的来访视频和日常操作，带到一块可以�
 没有打开平板，也能通过网关扬声器听见来访。独立开关和音量，USB、模拟与 HDMI 自动选择；Web 与实体屏幕都能设置。详见[操作手册与硬件验收边界](gateway-audio.md)。
 
 ![网关独立声音，合成设备](demo/admin-gateway-sound.webp)
+
+## A quiet view of today
+
+See incoming visits and confirmed openings at a glance: clear counts for administrators, quiet icons beside the phone clock. Each phone only sees its authorized entrances.
+
+[统计口径与预览 · Counting rules and previews](daily-statistics.md)

@@ -6,6 +6,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPTIONS = {
+    'admin-statistics': ('今日活动 · Daily activity', '来电与协议确认开门，按网关本地日期汇总。'),
+    'phone-statistics': ('待机统计 · Quiet activity', '图标与数字，轻触或聚焦显示统计口径。'),
+    'lcd-home': ('实体首页统计 · LCD daily activity', '保持大按钮，简明显示今日来电与确认开门。'),
     'admin-gateway-sound': ('网关独立响铃 · Gateway sound', '独立开关、音量、输出选择与明确的测试声音。'),
     'admin-gateway-no-device': ('首选设备失联 · Missing output', '保留首选偏好，显示设备状态并自动降级。'),
     'lcd-settings': ('实体屏幕设置 · LCD settings', '声音与自动开门分别进入，保留大触控按钮。'),
@@ -58,8 +61,8 @@ def main():
     for item in images.values():
         if hashlib.sha256((folder/item['file']).read_bytes()).hexdigest() != item['sha256']:
             raise SystemExit('Image hash mismatch: '+item['file'])
-    intro = ('这些 v0.5.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
-             'Screenshots show version 0.5.0 using synthetic data.')
+    intro = ('这些开发版预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
+             'Screenshots show the development UI using synthetic data.')
     markdown = ['# 界面图集 · Interface gallery', intro,
                 '[中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)',
                 '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。']

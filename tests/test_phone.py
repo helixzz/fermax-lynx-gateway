@@ -88,6 +88,26 @@ class PhoneTests(unittest.TestCase):
         self.devices.revoke(device['id'])
         self.assertEqual(self.request('GET','/v1/phone/ringtone',cookie=phone)[0],401)
 
+    def test_statistics_http_scope_and_admin_authentication(self):
+        self.serve()
+        _, first, _ = self.grant()
+        second, _ = self.devices.renew(self.devices.enroll('Other', ['other']))
+        for i, panel in enumerate([self.allowed, 'other', 'other', None]):
+            self.state.event('Synthetic visit','incoming',{'call_id':str(i),'panel_id':panel})
+        self.state.event('Synthetic confirmation','open_auto',{'call_id':'1','panel_id':'other'})
+        admin='fermax='+self.auth.login(PASSWORD)
+        self.assertEqual(self.request('GET','/v1/state')[0],401)
+        self.assertEqual(self.request('GET','/v1/phone/state')[0],401)
+        self.assertEqual(self.request('GET','/v1/state',cookie='fermax_phone='+first)[0],401)
+        for session, incoming, openings in [(first,1,0),(second,2,1)]:
+            status, body, _ = self.request('GET','/v1/phone/state',cookie='fermax_phone='+session)
+            self.assertEqual(status,200)
+            stats=json.loads(body)['state']['statistics']
+            self.assertEqual(set(stats),{'date','available','incoming','openings'})
+            self.assertEqual((stats['incoming'],stats['openings']),(incoming,openings))
+        body=self.request('GET','/v1/state',cookie=admin)[1]
+        self.assertEqual(json.loads(body)['statistics']['incoming'],4)
+
     def test_grant_survives_restart_and_days_but_not_password_reset(self):
         now = [0.]
         self.devices.clock = lambda:now[0]
