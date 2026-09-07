@@ -1,88 +1,104 @@
 # FERMAX LYNX Gateway
 
-A self-hosted Linux gateway for a compatible FERMAX VIVO / LYNX installation. It replaces an indoor monitor's observed video and door-control functions with a local web interface, JSON API, event journal, and optional Raspberry Pi touch display.
+### A quieter clock. A clearer view of who's at the door.
 
-**Experimental interoperability project, not an official FERMAX product.** Tested at one installation. Other firmware, addressing plans, panels and elevator integrations require validation. Local voice, browser audio, Home Assistant entities, webhooks and MCP are not implemented yet.
+Turn a compatible LYNX installation into a local, tablet-friendly intercom experience:
+a room clock when it's quiet, a large entrance view when someone arrives, and the
+controls you need within reach. Runs on Linux, with an optional Raspberry Pi display.
 
-## Features
+[**Get started**](docs/user-guide.md) · [**中文用户手册**](docs/user-guide.zh-CN.md) · [**Explore every screen**](docs/demo-gallery.md) · [**Download a release**](https://github.com/helixzz/fermax-lynx-gateway/releases) · [**Report an issue**](https://github.com/helixzz/fermax-lynx-gateway/issues)
 
-- Configurable building label, numeric block ID, apartment number, extension, monitor IP, network interfaces and up to eight entrance panels. No real residence information is embedded in the source.
-- Incoming-call video and on-demand previews, dynamic door permission/relay queries, manual opening, automatic opening and hangup.
-- Persistent automatic-open timers, including unlimited duration; automatic opening applies only to incoming calls and attempts once per call.
-- Single-user web password changes, salted PBKDF2 hashes, revocable sessions, separate API tokens and command-line password recovery.
-- Complete SQLite application-event journal, filtering, pagination and CSV export. This is not a recording or packet-capture archive.
-- Foreground [tablet phone mode](docs/phone.md) with a clock, incoming video, scoped/revocable device grants, renewable sessions and reconnecting status. Real tablet endurance testing remains outstanding.
-- DHCP NTP selection with a public fallback when no NTP server is supplied; optional small SPI display with clock and recent events.
+![Incoming video fills a landscape tablet, with large translucent controls along the bottom. Original synthetic entrance illustration; no camera footage.](docs/demo/phone-incoming.webp)
 
-## What you need
+*Version 0.3.0: clock choices, configurable music and redesigned screens.
+See [changelog](CHANGELOG.md) for release scope.
+All images use synthetic data and an original illustrated entrance.*
 
-A Linux machine with a network interface dedicated to the building intercom and a separate home-network interface. Raspberry Pi with Ethernet for the intercom and Wi-Fi for the home network is one tested arrangement. A local microphone or speaker is not required for video and door controls.
+## Make it feel at home
 
-Supply your own installation addresses and a compatible 24-byte protocol key in a private file named `edk`. **No protocol key, firmware archive, vendor descriptor bundle, captured traffic, private configuration or camera image is distributed.** The repository contains a small, source-defined wire schema for the operations it implements. It does not provide a key-discovery or firmware-extraction tool.
+| A clock for your room | A clock with character |
+|---|---|
+| ![Editorial clock with large serif numerals](docs/demo/clock-editorial.webp) | ![Warm glowing tube-style clock](docs/demo/clock-nixie.webp) |
+| **Editorial** — quiet, spacious numerals. | **Tube** — warm light and a vintage glass effect. |
+| ![Clear electronic clock](docs/demo/clock-digital.webp) | ![Classic analog clock](docs/demo/clock-analog.webp) |
+| **Digital** — bold digits for a quick glance. | **Analog** — a classic face with ticking or sweeping seconds. |
 
-The example uses reserved documentation IP addresses and will not work unchanged. Changing the apartment label does not provision the building controller or assign an IP to Linux. Obtain the correct site configuration; do not assume an address formula proven at one site applies everywhere. Disconnect the original monitor before using its address.
+Show or hide seconds. Choose your own volume. Preferences stay with each tablet;
+credentials do not go into browser storage. A first touch reveals controls without
+also operating the door.
 
-## Quick start (Debian / Raspberry Pi OS)
+## See more. Reach less.
+
+The video page uses the full viewport and preserves the complete 4:3 image. A compact
+header and translucent, large touch controls sit at its edges. Landscape makes the
+most of a tablet's screen; portrait keeps the image uncropped.
+
+- **Incoming video and previews:** see an entrance, end a visit, or use manual opening
+  when the active session and panel permit it. There is no fake “answered” state.
+- **A familiar sound:** administrators choose three original melodies or upload a
+  music excerpt. Loop for 15, 30, 45 or 60 seconds; 30 is the default. Muting or ending
+  the visit stops playback, and reconnecting does not restart the whole ringing window.
+- **Stay connected:** scoped device grants, automatic short-session renewal, heartbeat
+  status and recovery after network interruptions or service restarts.
+- **Manage locally:** revoke individual tablets, manage the existing automatic-opening
+  policy, inspect events and export the journal. The gateway owns automatic opening;
+  multiple tablets do not each repeat it.
+
+![Administrator music selection, duration and upload controls](docs/demo/admin-custom-music.webp)
+
+[Read the illustrated guide →](docs/user-guide.md) · [查看中文操作步骤 →](docs/user-guide.zh-CN.md)
+
+## Is this right for your installation?
+
+This is an **experimental, unofficial interoperability project** for compatible
+FERMAX VIVO / LYNX systems. You need a Linux host, separate intercom/home network
+interfaces, your own valid site configuration and a compatible 24-byte protocol key.
+No key, vendor firmware, private configuration or real camera image is distributed.
+
+| Available in this branch | Still outside the current scope |
+|---|---|
+| Incoming video, entrance preview, permitted door controls, event journal | Two-way voice and browser microphone support |
+| Tablet mode, clock choices, device authorization and configurable ringing | Recording, Home Assistant entities, webhooks and MCP |
+| Existing automatic-opening policy and optional SPI display | General compatibility with every building or firmware |
+
+Old iPadOS 15, actual tablet sound, 72-hour foreground operation and seven-day
+observation still need field validation. Background/locked-screen ringing is not
+promised. HTTP is intended for a trusted LAN; HTTPS support is a separate milestone.
+A protocol acknowledgement alone does not establish physical opening or elevator behavior.
+
+## Start with a release
+
+Download a [tagged source release](https://github.com/helixzz/fermax-lynx-gateway/releases),
+verify its checksum and extract it. From that directory on Debian / Raspberry Pi OS:
 
 ```sh
 sudo apt update
 sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av
 python3 -m fermax.admin init
 python3 -m fermax.admin password
-# Edit ~/.local/state/fermax/config.json and place your private key in edk.
+# Set your site values in ~/.local/state/fermax/config.json and install your own edk.
 chmod 600 ~/.local/state/fermax/edk
 python3 -m fermax.main
 ```
 
-Run these commands from the repository directory. Configure the Linux interfaces separately: the intercom interface needs the site's static address/subnet and no default route; home traffic uses the home interface. Keep IP forwarding disabled. The program binds building protocols to `monitor_ip`, and HTTP to the home IPv4 address and loopback. It does not bridge the networks.
+The generated configuration contains documentation addresses, so it cannot be used
+unchanged. Configure Linux network addresses separately, keep the intercom interface
+without a default route, and avoid an address conflict with the original monitor.
+Then open `http://<home-ip>:8765/` and follow the [first-use guide](docs/user-guide.md).
+For a system service and optional LCD, use the [deployment guide](docs/deployment.md).
 
-Open `http://<home-ip>:8765/` and log in with the password you set. Device settings and password management are available in the web interface. Saved device settings require a service restart; they do not change OS network configuration. The UI is currently Chinese.
+## Explore or contribute
 
-For a headless system service, see [deployment](docs/deployment.md). The optional display supports the observed ILI9486/ADS7846 480×320 profile and shows the first two panels; the web interface shows all configured panels. Other displays need adaptation.
+| For users | For contributors |
+|---|---|
+| [English user guide](docs/user-guide.md) / [中文手册](docs/user-guide.zh-CN.md) | [Contributing](CONTRIBUTING.md) / [coordination](AGENTS.md) |
+| [Every screen, with captions](docs/demo-gallery.md) | [API](docs/api.md) / [protocol scope](docs/protocol.md) |
+| [Product overview / 项目简介](docs/product.md) | [UI decisions and sources](docs/phone-design.md) |
+| [Releases and version rules](docs/releases.md) | [Roadmap](docs/roadmap.md) / [tests](docs/phone.md#limitations-and-validation) |
 
-## Password recovery
+The gallery also includes a [local HTML demo viewer](docs/demo/index.html): open it
+from a downloaded checkout to browse all previews without running a gateway.
 
-Passwords are hashed in `auth.json`; they cannot be read back. Run the recovery command as the service user with the same state directory:
-
-```sh
-python3 -m fermax.admin --state-dir /var/lib/fermax password
-```
-
-It prompts twice, writes a new hash and invalidates existing web sessions without restarting. `--stdin` is available for a protected pipeline; never put a password on the command line. Do not edit the hash format manually.
-
-API tokens are independent of web passwords. To generate or revoke an API token:
-
-```sh
-python3 -m fermax.admin --state-dir /var/lib/fermax api-token
-```
-
-The new token is written to `api-token`; it is not printed. The HTTP service is intended for a trusted LAN. HTTPS is not built in; deployment behind a reverse proxy needs a separate HTTPS/origin/cookie configuration change. Do not expose this development HTTP endpoint directly to the Internet.
-
-## API and roadmap
-
-Current milestone: [tablet phone #3](https://github.com/helixzz/fermax-lynx-gateway/issues/3).
-Proposals: [Webhook #1](https://github.com/helixzz/fermax-lynx-gateway/issues/1), [MCP #2](https://github.com/helixzz/fermax-lynx-gateway/issues/2), and [recording #4](https://github.com/helixzz/fermax-lynx-gateway/issues/4).
-
-See [API](docs/api.md), [protocol scope](docs/protocol.md) and [roadmap](docs/roadmap.md). Webhook and MCP plans are proposals only; the gateway does not send event data to external services.
-
-## Validation
-
-```sh
-python3 -m unittest discover -s tests -v
-```
-
-Public tests use fabricated identities and messages, documentation IPs and synthetic media. ENet tests communicate only over loopback; controller tests do not create network sockets or operate locks. Private traffic was used during development but is not required to run the public suite.
-
-A compatible site has confirmed automatic opening followed by its existing elevator-floor authorization. Elevator authorization is an effect of that site's door workflow, not a standalone feature or arbitrary floor-selection API. Signaling success alone does not prove physical opening; each installation needs its own checks. No long-term reliability claim is made.
-
-## 中文简述
-
-这是一个自托管的 LYNX 室内机网关原型，支持真实视频、开门、自动策略与日志。楼号、门牌号、分机、设备 IP、接口和门口机列表均可配置；没有内置真实住户信息或协议密钥。
-
-网页“设备与密码设置”支持保存配置和修改密码。设备配置保存后需重启服务，Linux 网卡地址另行配置。忘记密码可运行 `python3 -m fermax.admin password`，无需多用户系统。Webhook 和 MCP 目前仅有提案与工作量评估。
-
-## License
-
-MIT for this repository's original implementation. Third-party packages retain their own licenses. FERMAX, VIVO and LYNX names identify compatibility targets; this project is not affiliated with or endorsed by their owners.
-
-Versioning and release history: [release policy](docs/releases.md) · [changelog](CHANGELOG.md).
+MIT for the original implementation; dependencies retain their licenses. FERMAX,
+VIVO and LYNX identify compatibility targets. This project is not affiliated with
+or endorsed by their owners.

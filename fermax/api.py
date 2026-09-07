@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 from .config import validate, load
 from .state import atomic_json
 from .phone import Devices
+from .phone_preferences import MAX_MUSIC_BYTES
 
 WEB = Path(__file__).resolve().parent/'web'
 
@@ -125,6 +126,9 @@ def server(state, auth, address=('127.0.0.1', 8765)):
             device = self.phone_device()
             if not device:
                 return
+            if path == '/v1/phone/ringtone':
+                music = state.phone_preferences.audio(parse_qs(urlsplit(self.path).query).get('revision',[None])[0])
+                return self.send(200,music,'audio/wav') if music else self.send(404,{'error':'铃声不可用'})
             if path == '/v1/phone/state':
                 return self.send(200, state.stream_snapshot(device['panels']))
             if path == '/v1/phone/events':
@@ -154,7 +158,8 @@ def server(state, auth, address=('127.0.0.1', 8765)):
         def do_GET(self):
             path = urlsplit(self.path).path
             static = {'/':'index.html','/app.js':'app.js','/style.css':'style.css','/settings.js':'settings.js',
-                      '/phone':'phone.html','/phone.js':'phone.js','/phone.css':'phone.css'}
+                      '/phone':'phone.html','/phone.js':'phone.js','/phone.css':'phone.css',
+                      '/clock.js':'clock.js','/ringtone.js':'ringtone.js'}
             if path in static:
                 name = static[path]
                 mime = {'html':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8'}[name.split('.')[-1]]
@@ -166,6 +171,11 @@ def server(state, auth, address=('127.0.0.1', 8765)):
             if not self.authorized():
                 return
             try:
+                if path == '/v1/phone-preferences':
+                    return self.send(200,state.phone_preferences.snapshot())
+                if path == '/v1/ringtone':
+                    music = state.phone_preferences.audio(parse_qs(urlsplit(self.path).query).get('revision',[None])[0])
+                    return self.send(200,music,'audio/wav') if music else self.send(404,{'error':'铃声不可用'})
                 if path == '/v1/config':
                     saved = load(state.folder/'config.json')
                     self.send(200, {'config':saved, 'restart_required':saved != state.config})
@@ -212,6 +222,15 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 return self.send(403, {'error':'跨站请求被拒绝'})
             try:
                 length = int(self.headers.get('Content-Length', '0'))
+                if self.path == '/v1/ringtone':
+                    if not self.authorized(): return
+                    if not 0 < length <= MAX_MUSIC_BYTES:
+                        self.close_connection = True
+                        return self.send(413,{'error':'铃声文件过大'})
+                    self.connection.settimeout(15)
+                    music = self.rfile.read(length)
+                    if len(music) != length: raise ValueError('铃声上传不完整')
+                    return self.send(200,state.phone_preferences.upload(music))
                 if not 0 < length <= 8192:
                     raise ValueError('请求长度无效')
                 self.connection.settimeout(5)
@@ -280,6 +299,10 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                     auth.change(data.get('current_password'), data.get('new_password'))
                     state.event('Web password changed; sessions revoked', 'password_changed')
                     return self.send(200, {'ok':True}, extra={'Set-Cookie':'fermax=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'})
+                if self.path == '/v1/phone-preferences':
+                    result = state.phone_preferences.update(data)
+                    state.event('话机铃声设置已更新', 'phone_preferences_changed')
+                    return self.send(200,result)
                 if self.path == '/v1/config':
                     with state.lock:
                         if state.call != 'idle':
@@ -298,6 +321,8 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 self.send(200, state.snapshot())
             except PermissionError as error:
                 self.send(403, {'error':str(error)})
+            except OSError:
+                self.send(503, {'error':'保存暂不可用，请稍后重试'})
             except (ValueError, TypeError, TimeoutError) as error:
                 self.send(400, {'error':str(error)})
 

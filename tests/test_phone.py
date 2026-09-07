@@ -60,6 +60,34 @@ class PhoneTests(unittest.TestCase):
         conn.close()
         return result
 
+    def test_ringtone_admin_write_phone_read_and_revocation(self):
+        from tests.test_phone_preferences import music
+        self.serve()
+        _, session, device = self.grant()
+        phone = 'fermax_phone='+session
+        admin = 'fermax='+self.auth.login(PASSWORD)
+        settings = {'ringtone':'harbor','ring_seconds':15}
+        self.assertEqual(self.request('POST','/v1/phone-preferences',settings,phone)[0],401)
+        self.assertEqual(self.request('GET','/v1/phone-preferences',cookie=phone)[0],401)
+        self.assertEqual(self.request('POST','/v1/phone-preferences',settings,admin)[0],200)
+        def upload(cookie, origin=None, declared=None):
+            conn = http.client.HTTPConnection(*self.service.server_address,timeout=4)
+            headers = {'Cookie':cookie,'Content-Type':'audio/wav'}
+            if origin: headers['Origin'] = origin
+            if declared: headers['Content-Length'] = str(declared)
+            conn.request('POST','/v1/ringtone',music(),headers)
+            response = conn.getresponse(); status = response.status; response.read(); conn.close()
+            return status
+        self.assertEqual(upload(phone),401)
+        self.assertEqual(upload(admin,'http://foreign.example'),403)
+        self.assertEqual(upload(admin,declared=7*1024*1024),413)
+        self.assertEqual(upload(admin),200)
+        self.assertEqual(self.request('GET','/v1/phone/ringtone',cookie=phone)[0],200)
+        self.assertEqual(self.request('GET','/v1/phone/ringtone?revision=stale',cookie=phone)[0],404)
+        self.assertEqual(self.request('GET','/v1/phone/ringtone')[0],401)
+        self.devices.revoke(device['id'])
+        self.assertEqual(self.request('GET','/v1/phone/ringtone',cookie=phone)[0],401)
+
     def test_grant_survives_restart_and_days_but_not_password_reset(self):
         now = [0.]
         self.devices.clock = lambda:now[0]

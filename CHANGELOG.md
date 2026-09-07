@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 — 2026-09-07
+
+- Four phone clock styles with hidden/ticking/sweeping seconds and device-local display preferences.
+- Larger touch typography and a full-viewport, uncropped 4:3 video layout with translucent controls.
+- Administrator ringtone melodies or uploaded music; 15/30/45/60-second loops, default 30, bounded by monotonic call age.
+- Illustrated English/Chinese guides, synthetic all-screen demos and a redesigned project introduction.
+
 ## 0.2.0 — 2026-09-07
 
 ### Added

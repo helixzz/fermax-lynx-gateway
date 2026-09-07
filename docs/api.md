@@ -16,6 +16,10 @@ Use `Authorization: Bearer <api-token>` for integrations. The web client exchang
 | GET /v1/state | identity, panels, network, call, permissions, policy, clock and recent events |
 | POST /v1/auto | minutes: 15, 30, 60, 120, 240, 480, 720, 0 (unlimited), or null (off) |
 | POST /v1/control | action, optional panel, request_id |
+| GET /v1/phone-preferences | administrator-owned ringtone settings |
+| POST /v1/phone-preferences | ringtone: chime/harbor/marimba/custom; ring_seconds: 15/30/45/60 |
+| POST /v1/ringtone | administrator; raw 16-bit PCM WAV, at most 6 MiB and 60 seconds |
+| GET /v1/ringtone | administrator; WAV audio, optional revision query |
 | GET /v1/frame.jpg | latest fresh JPEG, or 404 |
 | GET /v1/logs | limit (1–500), optional before ID and kind |
 | GET /v1/logs/export | all application events as UTF-8 CSV |
