@@ -117,7 +117,7 @@ Each browser stores clock style (editorial, digital, analog, nixie), seconds mod
 (hidden, step, sweep) and volume locally. These cosmetic preferences contain no
 credentials. Reduced motion changes the analog sweep to ticking.
 
-Administrators choose three built-in melodies or custom music, with a
+Administrators choose 16 built-in melodies or custom music, with a
 15/30/45/60-second loop window (default 30). Browser imports decode audio up to
 60 seconds and 10 MB, then convert it to mono PCM WAV. The server accepts only
 bounded 16-bit PCM WAV and removes metadata. Back up `phone-preferences.json` and
@@ -146,3 +146,5 @@ python3 tools/build_demo_gallery.py
 The experience test supports the browser selection variables above. Its manifest
 records source and image SHA-256 hashes. Screenshots are static demos and do not
 establish physical-device or production readiness.
+
+See [ringtone catalog and source notes](ringtones.md) for the offline library and code downgrade considerations.

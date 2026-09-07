@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2026-09-07
+
+- Sixteen locally synthesized original ringtone scores with grouped selection, audition and source/license records.
+- State-driven administrator automatic-opening controls; enabled policies expose only Stop.
+- Separate management navigation and settings sections, fixing overlapping entry buttons across screen sizes.
+- Updated synthetic demos, offline sound audition and guides.
+
+
 ## 0.3.0 — 2026-09-07
 
 - Four phone clock styles with hidden/ticking/sweeping seconds and device-local display preferences.

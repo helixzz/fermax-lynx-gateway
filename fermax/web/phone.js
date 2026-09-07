@@ -10,7 +10,7 @@
   const sound = new window.LynxSound(), clock = new window.LynxClock();
   let mutedCall = null, currentCall = null, pending = null, wakeLock = null;
   let ringPlan = null, ringStartedFor = null, sweepFrame = null, lastSweep = 0, messageTimer;
-  const ringNames = {chime:'清脆门铃',harbor:'海港旋律',marimba:'木琴轻响',custom:'自定义音乐'};
+  const ringNames = Object.assign({custom:'自定义音乐'},Object.fromEntries(window.LynxRingtones.map(track=>[track.id,track.name])));
   const eventNames = {incoming:'收到来访', outgoing:'查看门口机', call_ended:'来访结束',
     open_manual:'门口机确认开门', open_auto:'自动开门已确认', open_unknown:'开门结果未知',
     open_denied:'开门被拒绝', control_failed:'操作未完成'};

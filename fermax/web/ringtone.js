@@ -19,16 +19,30 @@
     }
     volume(value) { if (this.gain) this.gain.gain.value = Math.max(0,Math.min(1,value)); }
     builtin(name) {
-      const melodies = {chime:[659.25,523.25,783.99,659.25], harbor:[392,523.25,587.33,783.99,587.33,523.25], marimba:[523.25,659.25,783.99,1046.5,783.99,659.25]};
-      const notes = melodies[name] || melodies.chime, rate = 24000, spacing = name === 'chime' ? .48 : .38;
-      const buffer = this.context.createBuffer(1,Math.ceil((notes.length*spacing+1.2)*rate),rate), samples = buffer.getChannelData(0);
-      notes.forEach((frequency,index) => {
-        const start = Math.floor(index*spacing*rate);
-        for (let i = 0; i < rate*.7 && start+i < samples.length; i++) {
-          const t = i/rate, envelope = Math.min(1,t/.012)*Math.exp(-t*7);
-          samples[start+i] += .23*envelope*(Math.sin(2*Math.PI*frequency*t)+.2*Math.sin(2*Math.PI*frequency*2*t));
+      const track = window.LynxRingtones.find(track => track.id === name) || window.LynxRingtones[0];
+      const rate = 24000, beat = 60/track.bpm, tail = 1.1;
+      const length = track.beats.reduce((sum,n) => sum+n,0)*beat+tail;
+      const buffer = this.context.createBuffer(1,Math.ceil(length*rate),rate), samples = buffer.getChannelData(0);
+      let position = 0;
+      track.notes.forEach((note,index) => {
+        const frequency = 440*Math.pow(2,(note-69)/12), start = Math.floor(position*rate);
+        const duration = Math.min(track.beats[index]*beat+.45,1.4);
+        for (let i=0; i<duration*rate && start+i<samples.length; i++) {
+          const t=i/rate, phase=2*Math.PI*frequency*t;
+          const slow=track.voice==='soft' || track.voice==='sine';
+          const envelope=Math.min(1,t/(slow?.025:.009))*Math.exp(-t*(slow?3.8:6.5))*Math.min(1,(duration-t)/.05);
+          let wave=Math.sin(phase);
+          if (track.voice==='bell' || track.voice==='glass') wave += .25*Math.sin(phase*2.01)*Math.exp(-t*8)+.12*Math.sin(phase*3.98)*Math.exp(-t*13);
+          if (track.voice==='wood') wave += .3*Math.sin(phase*3)*Math.exp(-t*16);
+          if (track.voice==='piano') wave += .3*Math.sin(phase*2)*Math.exp(-t*6)+.14*Math.sin(phase*3)*Math.exp(-t*10);
+          if (track.voice==='pluck') wave += .23*Math.sin(phase*2)+.1*Math.sin(phase*4)*Math.exp(-t*9);
+          samples[start+i] += envelope*wave;
         }
+        position += track.beats[index]*beat;
       });
+      // Match peak levels without clipping, with silent tails for clean looping.
+      let peak=0; for (const sample of samples) peak=Math.max(peak,Math.abs(sample));
+      if (peak) for (let i=0;i<samples.length;i++) samples[i]*=.26/peak;
       return buffer;
     }
     async prepare(settings, endpoint='/v1/phone/ringtone') {
@@ -59,7 +73,7 @@
       const remaining = seconds-(performance.now()-started)/1000;
       if (ticket !== this.ticket || !this.enabled || remaining <= 0) { if (ticket === this.ticket) this.mode = null; return; }
       const source = this.context.createBufferSource(), gain = this.context.createGain();
-      source.buffer = buffer; source.loop = true; gain.gain.value = volume;
+      source.buffer = buffer; source.loop = true; gain.gain.value = Math.max(0,Math.min(1,volume));
       source.connect(gain); gain.connect(this.context.destination);
       this.source = source; this.gain = gain; this.mode = mode;
       source.onended = () => { source.disconnect(); gain.disconnect(); if (this.source === source) { this.source = this.gain = null; this.mode = null; } };

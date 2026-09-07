@@ -107,6 +107,10 @@ def main():
                 elif command == 'network_down': state.network = 'disconnected'
                 elif command == 'network_up': state.network = 'ready'
                 elif command == 'auto': state.set_auto(0)
+                elif command == 'auto_off': state.set_auto(None)
+                elif command == 'auto_expire':
+                    state.deadline = state.mono()-1
+                    state.tick()
                 elif command == 'hold_open': hold_open = True
                 elif command == 'other_result':
                     state.event('Synthetic other client', 'open_denied', {'request_id':'other-client-request'})

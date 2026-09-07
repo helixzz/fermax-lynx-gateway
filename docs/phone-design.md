@@ -78,3 +78,28 @@ stale images, offline state and revocation.
 These checks do not establish iPadOS 15 hardware compatibility, audible speaker output,
 72-hour foreground endurance, physical door effects or background ringing. Those
 remain field acceptance items in Issue #3.
+
+## Administrator follow-up (v0.4.0)
+
+The old phone link was an inline anchor with vertical padding. Its painted height
+exceeded its line box, overlapping the settings button by 15 CSS pixels at tested
+1024, 768 and 390 widths. Both entries now occupy normal flex/grid navigation flow
+with an explicit gap; the policy card no longer holds navigation controls.
+
+The overview separates the visitor view and policy card. Settings have four task
+sections: music, phone devices, gateway configuration and password. Only one section
+is shown at a time. The music library provides 16 labeled choices, a saved-selection
+summary and explicit save; audition alone does not commit a new selection.
+
+Automatic-opening controls follow the confirmed server policy: inactive shows
+Duration + Enable; active shows end time/unlimited + Stop. Pending writes disable
+duplicate submission and drain prior polls before posting. Polls pause during the
+write and its confirmation; failed HTTP writes keep the last confirmed layout,
+whereas an unknown transport outcome hides policy controls until a fresh snapshot.
+No automatic retry or policy write is triggered by loading or navigating the page.
+Expiry and another client's changes are picked up by the existing state polling.
+
+The synthetic browser suite covers these transitions, 503 failure, delayed response,
+offline recovery, four viewport shapes, a long entry label and 200% CSS zoom/reflow.
+CSS zoom is a layout stress check, not physical old-tablet hardware acceptance.
+Music source decisions and downgrade requirements are in [ringtone notes](ringtones.md).

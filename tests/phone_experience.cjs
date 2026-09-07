@@ -41,9 +41,38 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     async function login(page){await page.goto(origin);await page.locator('#password').fill('synthetic-phone-password');await page.locator('#loginForm button').click();await page.locator('#workspace').waitFor({state:'visible'});}
     await admin.goto(origin);await admin.locator('#login').waitFor({state:'visible'});await shot(admin,'admin-login');
     await login(admin);await shot(admin,'admin-dashboard');
+    async function noOverlap(){
+      assert.equal(await admin.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      const boxes=await admin.locator('.navActions > *').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom}}));
+      for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];assert.equal(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top,false);}
+    }
+    for(const [width,height] of [[1024,768],[768,1024],[390,844],[844,390]]){await admin.setViewportSize({width,height});await noOverlap();}
+    await admin.setViewportSize({width:1024,height:768});await admin.evaluate(()=>document.body.style.zoom='2');await noOverlap();await shot(admin,'admin-zoom');await admin.evaluate(()=>document.body.style.zoom='');
+    assert.equal(await admin.locator('#autoSetup').isVisible(),true);assert.equal(await admin.locator('#disableAuto').isVisible(),false);
+    await admin.locator('#duration').selectOption('15');await admin.locator('#enableAuto').click();await admin.waitForFunction(()=>document.querySelector('#autoState').textContent.includes('限时'));
+    assert.equal(await admin.locator('#autoSetup').isVisible(),false);await shot(admin,'admin-auto-timed');
+    await scenario('auto_expire');await admin.locator('#autoSetup').waitFor({state:'visible'});
+    await scenario('auto');await admin.waitForFunction(()=>document.querySelector('#autoState').textContent.includes('无时限'));await shot(admin,'admin-auto-unlimited');
+    // HTTP failure must retain the confirmed enabled state and must not issue a retry.
+    let posts=0;await admin.route('**/v1/auto',async route=>{posts++;await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic write failure'})})});
+    await admin.locator('#disableAuto').click();await admin.waitForFunction(()=>document.querySelector('#error').textContent.includes('Synthetic'));
+    assert.equal(await admin.locator('#autoSetup').isVisible(),false);assert.equal(await admin.locator('#disableAuto').isEnabled(),true);assert.equal(posts,1);await admin.unroute('**/v1/auto');
+    let release;const gate=new Promise(resolve=>release=resolve);let waiting=false;await admin.route('**/v1/auto',async route=>{waiting=true;await gate;await route.continue()});
+    await admin.locator('#disableAuto').click();await admin.waitForFunction(()=>document.querySelector('#autoFeedback').textContent.includes('正在提交'));assert.equal(waiting,true);assert.equal(await admin.locator('#disableAuto').isDisabled(),true);
+    release();await admin.locator('#autoSetup').waitFor({state:'visible'});await admin.unroute('**/v1/auto');
+    await context.setOffline(true);await admin.waitForFunction(()=>document.querySelector('#autoState').textContent.includes('不可确认'));assert.equal(await admin.locator('#enableAuto').isVisible(),false);await shot(admin,'admin-offline');
+    await context.setOffline(false);await admin.locator('#autoSetup').waitFor({state:'visible'});await admin.evaluate(()=>document.querySelector('#error').textContent='');
+    // A late frame cannot repaint a visit after the state has ended it.
+    await scenario('incoming');await admin.locator('#video').waitFor({state:'visible'});
+    let frameRelease,frameReady;const frameGate=new Promise(resolve=>frameRelease=resolve),frameCaptured=new Promise(resolve=>frameReady=resolve);
+    await admin.route('**/v1/frame.jpg',async route=>{const response=await route.fetch();frameReady();await frameGate;await route.fulfill({response});});
+    await frameCaptured;await scenario('end');await admin.locator('#video').waitFor({state:'hidden'});
+    const lateFrame=admin.waitForResponse('**/v1/frame.jpg');frameRelease();await lateFrame;await admin.waitForTimeout(80);assert.equal(await admin.locator('#video').isVisible(),false);await admin.unroute('**/v1/frame.jpg');
     await admin.locator('#showSettings').click();await admin.locator('#ringtoneChoice').waitFor({state:'visible'});
-    await shot(admin,'admin-ringtone','#phoneMusicSettings');
-    await shot(admin,'admin-network','#configForm');await shot(admin,'admin-password','#passwordForm');await shot(admin,'admin-journal','.journal');
+    await shot(admin,'admin-settings','#settings');await shot(admin,'admin-ringtone','#phoneMusicSettings');assert.equal(await admin.locator('[data-tone]').count(),16);for(const button of await admin.locator('[data-tone]').all()){await button.click();await admin.waitForFunction(()=>document.querySelector('#musicStatus').textContent.includes('正在试听'));await admin.locator('#stopRingtone').click();}await shot(admin,'admin-ringtone-library','#phoneMusicSettings');
+    for(const [width,height] of [[768,1024],[390,844],[844,390]]){await admin.setViewportSize({width,height});await noOverlap();const original=await admin.locator('#phoneLink').textContent();await admin.locator('#phoneLink').evaluate(node=>node.textContent='进入客厅平板话机模式 · 长标签测试');await noOverlap();await admin.locator('#phoneLink').evaluate((node,text)=>node.textContent=text,original);}
+    await admin.setViewportSize({width:1024,height:768});await admin.evaluate(()=>document.body.style.zoom='2');await noOverlap();await admin.evaluate(()=>document.body.style.zoom='');
+    await admin.locator('[data-setting=configForm]').click();await shot(admin,'admin-network','#configForm');await admin.locator('[data-setting=passwordForm]').click();await shot(admin,'admin-password','#passwordForm');await admin.locator('#backOverview').click();await shot(admin,'admin-journal','.journal');await admin.locator('#showSettings').click();await admin.locator('[data-setting=phoneMusicSettings]').click();
     await admin.locator('#ringtoneChoice').selectOption('marimba');await admin.locator('#ringDuration').selectOption('15');await admin.locator('#phoneMusicForm button.primary').click();
     await admin.waitForFunction(()=>document.querySelector('#musicStatus').textContent.includes('已保存'));
     // Upload a small original PCM tone through the administrator's actual browser importer.
@@ -94,10 +123,24 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await page.setViewportSize({width:1024,height:768});await scenario('video_stale');await page.locator('#picture').waitFor({state:'hidden'});await shot(page,'phone-stale-video');
     await context.setOffline(true);await page.waitForFunction(()=>document.querySelector('#open').disabled);await shot(page,'phone-offline');
     await context.setOffline(false);await scenario('end');await page.locator('#idle').waitFor({state:'visible'});
-    await login(admin);await admin.locator('#showSettings').click();await admin.locator('#deviceList li').waitFor({state:'visible'});await shot(admin,'admin-devices','#phoneDevicesSettings');
+    await login(admin);await admin.locator('#showSettings').click();await admin.locator('[data-setting=phoneDevicesSettings]').click();await admin.locator('#deviceList li').waitFor({state:'visible'});await shot(admin,'admin-devices','#phoneDevicesSettings');
     await scenario('revoke');await page.locator('#setup').waitFor({state:'visible'});await shot(page,'phone-revoked');
+    // Password rotation logs out through the same layout reset as explicit logout.
+    await admin.locator('[data-setting=passwordForm]').click();
+    await admin.locator('[name=current_password]').fill('synthetic-phone-password');
+    await admin.locator('[name=new_password]').fill('synthetic-updated-password');
+    await admin.locator('[name=confirm_password]').fill('synthetic-updated-password');
+    await admin.locator('#passwordForm button').click();
+    await admin.locator('#login').waitFor({state:'visible'});
+    // Stay in the same document: navigation would conceal the hidden-overview regression.
+    await admin.locator('#password').fill('synthetic-updated-password');
+    await admin.locator('#loginForm button').click();
+    await admin.locator('#overview').waitFor({state:'visible'});
+    assert.equal(await admin.locator('.journal').isVisible(),true);
+    assert.equal(await admin.locator('#settings').isVisible(),false);
+    assert.equal(await admin.locator('#showSettings').getAttribute('aria-expanded'),'false');
     assert.deepEqual(errors,[]);assert.ok(count>0);
-    if(directory){const sources={};for(const file of ['fermax/state.py','fermax/phone_preferences.py','fermax/api.py','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
+    if(directory){const sources={};for(const file of ['fermax/state.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
     console.log(engine+' PASS: admin music upload/settings, four clocks, preferences, 4:3 full viewport, ring expiry, mute, portrait/mobile, stale video, offline and revoked demos');
   }finally{if(browser)await browser.close();fixture.stdin.end();const timer=setTimeout(()=>fixture.kill('SIGTERM'),3000);if(fixture.exitCode===null)await once(fixture,'exit');clearTimeout(timer);lines.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

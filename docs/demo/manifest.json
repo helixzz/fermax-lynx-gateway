@@ -3,47 +3,73 @@
   "browser": "chromium",
   "source_sha256": {
     "fermax/state.py": "6df32cff755289f651fce4aa87a25b4a47622711540461dde90f065c09ca9833",
-    "fermax/phone_preferences.py": "f863382359842fada28a5653ea56fda2ceb91f41cb4b68f06e204099155787b9",
-    "fermax/api.py": "ca3259a4bf25ba373f35663f54610d54ccba88e0b93ed27cb204135c4eaea841",
-    "tests/phone_fixture.py": "8c9554b49ed0e3504a97f0b10ff4cd59e0849e3abfe9e2b3380f96256da93492",
-    "tests/phone_experience.cjs": "8188229beee9eea6743147972d919e214899e669509b6ae75c71c9cbb1ca1567",
-    "fermax/web/phone.html": "d7b44a1cf5cc3c49221040e9ac2fcd986ec3d38fb34dc0265fd344be345ecf3d",
+    "fermax/phone_preferences.py": "138a9816795d5ded2b56d2c6ade1844287c552e2f80739bdda3abd630c532f3d",
+    "fermax/api.py": "18d478ad1377f5e5b1c5b39a14c6997dbdebd55285100b07f9f626da521f2330",
+    "fermax/web/app.js": "b1a2f13b463af99f8066ab55a48b6bc2a9b722108ef0972200831f02d900185e",
+    "fermax/web/ringtones.json": "dd8f357f0cdb9fcc419752992570747a8a1ab1d4d2ac015c9ee2e8c4296e27e4",
+    "tests/phone_fixture.py": "d9b3990b034209838e2283d10351b1580dcd8284b3c6fce0f61890a2b51fcdad",
+    "tests/phone_experience.cjs": "e4cbed036cd49b61d59dd63c3c330ab7cb2808624eec944be5c783ffbaa4b4cb",
+    "fermax/web/phone.html": "4fe22ad1c4f50e762b021c586d6b4399edf7cd72dd8481f4908eed36be8e5c45",
     "fermax/web/phone.css": "959eecd0aa9f8572130bd0a946ac7cb7540bad1317d62428b9e9439d43a442dc",
-    "fermax/web/phone.js": "d3728b8d5dbb483b4e2ac3e3909b57f1dd4b79e715792751aaf2d2096ad1a56d",
+    "fermax/web/phone.js": "2cf186b4324d154712e580b9f110fc01c6ab5374eef3797e231e5ec971c07e5e",
     "fermax/web/clock.js": "0e9ead066de1444a73145fce0cc847fd6dadca7d838cde71c07ca2451128f667",
-    "fermax/web/ringtone.js": "fcc235b419402eed4b0ffdaa35a08fb454d257ff2eae1daad62e88157fee6d5e",
-    "fermax/web/index.html": "3aeb66c3ab48819a66d36191aac2082f7d3ec1f4dba4f75140e8663c15110d80",
-    "fermax/web/style.css": "3b669d71440ace60955cf75fe0f30752f9980dc15899d3de0795aad21f808fff",
-    "fermax/web/settings.js": "f3db2fa4de0dcc0621b00b0d7e59e93773a43291a68ea7b8c5f9080773331c31"
+    "fermax/web/ringtone.js": "ec007604da55c6f9dd3bfb033d7245623b936bd097017fc87dc1aafa65c03efd",
+    "fermax/web/index.html": "0fcb79f89f44a9883516a420ae1bd139b62318a75adbf944efcdad209b6101a8",
+    "fermax/web/style.css": "de290f6de82042b19f8fcce90baae69119d110d9800f5f52f0ee3da1b0ad0517",
+    "fermax/web/settings.js": "e57a80b95622c86e7d702f0381b14e61a51e71637f90379e18cc2332fde5c4df"
   },
   "images": [
     {
       "file": "admin-login.webp",
-      "sha256": "f288e6f99d63cad57a0dd3be51f2467e7b1a46b451625481515e9a928f7e1651"
+      "sha256": "a1907780363667d8983b18788f71f998be5e9536d9710ea768a13010c61d3319"
     },
     {
       "file": "admin-dashboard.webp",
-      "sha256": "24cd8f763444f2e2d196e15b0cce875780d1ed55c5d7b4bebf67f37ed4c67ee3"
+      "sha256": "011079ecc9750388f8c09d87201fef3cfbaa69d7b0cca28a84e058890d0342e1"
+    },
+    {
+      "file": "admin-zoom.webp",
+      "sha256": "a51ec66494c872baa95fcb6e2fae7b2eb0a688c05a3c622d31c453cb2a82ac5b"
+    },
+    {
+      "file": "admin-auto-timed.webp",
+      "sha256": "3e6f514789fdfa4f7e6549b2cbf737f3811d883b0f4b2b44848e29f1971b0d3f"
+    },
+    {
+      "file": "admin-auto-unlimited.webp",
+      "sha256": "b8973438a8ce05b5123ccb2c28374dfbee66968546434ccc2132a38aa5fd7665"
+    },
+    {
+      "file": "admin-offline.webp",
+      "sha256": "675d5002db76afa41c88c71d73fee7b00bab8584ba7e051dafcef90d600eca5f"
+    },
+    {
+      "file": "admin-settings.webp",
+      "sha256": "0073bae3758c812eeb8c739ff2eb40a99070ec54e4430cbfac1ceb91d8ef4067"
     },
     {
       "file": "admin-ringtone.webp",
-      "sha256": "5a4d89faa5545db43cb5c80fa084a3f895851b2580350a403e05b68926754dca"
+      "sha256": "f8e72fb15c32d339c1ed81d273c0b5cef738318b5629093e025a2783ccc06b9f"
+    },
+    {
+      "file": "admin-ringtone-library.webp",
+      "sha256": "045ff34dfe47b47e01d8424fe82e984dea4de965660f71ed78ac63e853efd198"
     },
     {
       "file": "admin-network.webp",
-      "sha256": "bf0ba8312452fef93aa873fe38196aea1ad29bc70cd48f9b245ade79b347fcc2"
+      "sha256": "e371f045f2a78be2f0d9b11ac2341cb8e662fa7ad885bad0e3f822e34b43cc99"
     },
     {
       "file": "admin-password.webp",
-      "sha256": "e1f13cd7909e2397c65e2eb6effbd2ae85496d39ff14846bc49250bd3b8e7db1"
+      "sha256": "8236c7174791d8a51d4a564dc58108630db982d36b3ba4323590808a0595b74b"
     },
     {
       "file": "admin-journal.webp",
-      "sha256": "c1c59fa28dace668e7155c5bbae4444a48a3feb04c99e54c5dbd89fccde319a1"
+      "sha256": "79234092677244756a3ca254d04d87d3e37af6a8aa3d9dc37a2079ba72d1b8e4"
     },
     {
       "file": "admin-custom-music.webp",
-      "sha256": "7eeb9ce374f7087cb4e0f9257bd54a74c8884faa4c4f9ea0bcf6fa784a6256fe"
+      "sha256": "915762131ffeedd6a3512ea7ab216678f1a13b72464d1b945cf628c5f459e94f"
     },
     {
       "file": "phone-enrollment.webp",
@@ -59,7 +85,7 @@
     },
     {
       "file": "clock-analog.webp",
-      "sha256": "42df2e444a5d5491919bb9df09e16bab628e1ba924971fb54ddeac3e385633c3"
+      "sha256": "4ddd442f106c266a88fd0becd9a094a6d4843a0eae3653e71760de32a51bf386"
     },
     {
       "file": "clock-nixie.webp",
@@ -115,7 +141,7 @@
     },
     {
       "file": "admin-devices.webp",
-      "sha256": "10d57daa1895a684e9e2623effd9619b92e7d37d2aad5cd443664498a3c8129c"
+      "sha256": "3f19d342e018199d6952f25044749d3a1516ec4a7386b3c2e5c467b3b3bfef30"
     },
     {
       "file": "phone-revoked.webp",

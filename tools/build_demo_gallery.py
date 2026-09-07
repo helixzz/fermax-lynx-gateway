@@ -24,6 +24,12 @@ CAPTIONS = {
     'phone-stale-video': ('画面过期 · Stale frame', '不把旧帧当成实时画面。'),
     'phone-offline': ('连接中断 · Offline', '状态清楚呈现，断线时禁用控制。'),
     'phone-revoked': ('授权撤销 · Revoked', '撤销后退出话机，重新授权才能使用。'),
+    'admin-auto-timed': ('限时自动开门 · Timed policy', '已启用时仅显示状态、截止时间和停止按钮。'),
+    'admin-auto-unlimited': ('无时限自动开门 · Unlimited policy', '只提供停止操作，隐藏再次启用和时长选择。'),
+    'admin-offline': ('管理页失联 · Unknown policy state', '无法确认服务器状态时隐藏策略操作，恢复后重新读取。'),
+    'admin-zoom': ('放大管理页 · 200% layout', '导航自然换行，入口按钮不重叠。'),
+    'admin-settings': ('设置导航 · Settings navigation', '铃声、话机设备、网关配置和密码按任务分区。'),
+    'admin-ringtone-library': ('16 首铃声 · Ringtone library', '点击选择并试听，保存后用于下一次来访。'),
     'admin-login': ('管理员登录 · Sign in', '独立的管理员登录入口。'),
     'admin-dashboard': ('管理首页 · Dashboard', '网关、入口、策略与活动概览。'),
     'admin-ringtone': ('内置铃声 · Built-in melodies', '管理员配置铃声及 15/30/45/60 秒时长。'),
@@ -47,11 +53,11 @@ def main():
     for item in images.values():
         if hashlib.sha256((folder/item['file']).read_bytes()).hexdigest() != item['sha256']:
             raise SystemExit('Image hash mismatch: '+item['file'])
-    intro = ('这些 0.3.0 版本预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
-             'Screenshots show version 0.3.0 using synthetic data.')
+    intro = ('这些 v0.4.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
+             'Screenshots show version 0.4.0 using synthetic data.')
     markdown = ['# 界面图集 · Interface gallery', intro,
                 '[中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)',
-                '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览。GitHub 页面可直接浏览以下全部截图。']
+                '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。']
     buttons, figures = [], []
     for index, (key, (title, caption)) in enumerate(CAPTIONS.items()):
         filename = images[key]['file']
@@ -69,6 +75,19 @@ document.querySelectorAll('nav button').forEach(button=>button.addEventListener(
 </script></html>
 ''')
     print(f'Validated hashes and built {len(images)}-screen galleries')
+    catalog = json.loads((ROOT/'fermax/web/ringtones.json').read_text())
+    options = ''.join(f'<option value="{track["id"]}">{html.escape(track["group"]+" · "+track["name"])}</option>' for track in catalog)
+    (folder/'sound.html').write_text('''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LYNX · 铃声试听</title>
+<style>:root{color-scheme:dark;background:#12211c;color:#e5ecd9;font-family:system-ui}body{max-width:650px;padding:28px;margin:8vh auto}h1{font-size:36px}p{line-height:1.8;color:#b4c4b9}label{display:grid;gap:12px}select,button{font:inherit;font-size:20px;padding:16px;border-radius:10px;border:1px solid #66806d;background:#1e3529;color:inherit;max-width:100%}button{margin:18px 12px 0 0;cursor:pointer}button:focus-visible,select:focus-visible{outline:3px solid #d0e5b4}a{color:#d0e5b4}</style>
+<h1>门铃，也有家的声音。</h1><p>16 首项目原创短旋律，全部在本地合成。选择曲目后轻触试听；不连接网关，也不会操作门锁。</p>
+<label>选择一首铃声<select id="track">'''+options+'''</select></label><button id="play">试听一遍</button><button id="stop">停止</button><p id="status" role="status">准备就绪</p><p><a href="index.html">返回界面图集</a> · <a href="../ringtones.md">来源与编排说明</a></p>
+<script>window.LynxRingtones = '''+json.dumps(catalog,ensure_ascii=False)+''';</script><script src="../../fermax/web/ringtone.js"></script><script>
+const player=new window.LynxSound();let generation=0,timer;
+function stop(){generation++;clearTimeout(timer);player.stop();document.querySelector('#status').textContent='已停止';}
+document.querySelector('#stop').onclick=stop;document.querySelector('#track').onchange=stop;
+document.querySelector('#play').onclick=async()=>{stop();const ticket=generation;try{await player.enable();if(ticket!==generation)return;const track=window.LynxRingtones.find(t=>t.id===document.querySelector('#track').value),seconds=track.beats.reduce((sum,n)=>sum+n,0)*60/track.bpm+1.1;await player.play({ringtone:track.id},seconds,.45,'preview');if(ticket!==generation)return;document.querySelector('#status').textContent='正在试听 · '+track.name;timer=setTimeout(()=>document.querySelector('#status').textContent='试听结束',seconds*1000);}catch(e){if(ticket===generation)document.querySelector('#status').textContent=e.message;}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});window.addEventListener('pagehide',stop);
+</script></html>''')
 
 
 if __name__ == '__main__':

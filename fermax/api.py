@@ -160,6 +160,8 @@ def server(state, auth, address=('127.0.0.1', 8765)):
             static = {'/':'index.html','/app.js':'app.js','/style.css':'style.css','/settings.js':'settings.js',
                       '/phone':'phone.html','/phone.js':'phone.js','/phone.css':'phone.css',
                       '/clock.js':'clock.js','/ringtone.js':'ringtone.js'}
+            if path == '/ringtones.js':
+                return self.send(200,b'window.LynxRingtones = '+(WEB/'ringtones.json').read_bytes()+b';', 'text/javascript; charset=utf-8')
             if path in static:
                 name = static[path]
                 mime = {'html':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8'}[name.split('.')[-1]]
