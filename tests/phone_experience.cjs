@@ -74,6 +74,12 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     const lateFrame=admin.waitForResponse('**/v1/frame.jpg');frameRelease();await lateFrame;await admin.waitForTimeout(80);assert.equal(await admin.locator('#video').isVisible(),false);await admin.unroute('**/v1/frame.jpg');
     await admin.locator('#showSettings').click();
     await admin.waitForFunction(()=>document.querySelector('#gatewayAudioDevices li'));
+    for(const [width,height] of [[1024,768],[768,1024],[390,844],[844,390]]){
+      await admin.setViewportSize({width,height});await noOverlap();
+      await admin.evaluate(()=>document.body.style.zoom='2');await noOverlap();
+      await admin.evaluate(()=>document.body.style.zoom='');
+    }
+    await admin.setViewportSize({width:1024,height:768});
     await shot(admin,'admin-gateway-sound','#gatewayAudioSettings');
     assert.equal(await admin.locator('#gatewayRingEnabled').inputValue(),'true');
     assert.equal(await admin.locator('#gatewayOutput option').count(),4);

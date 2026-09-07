@@ -21,3 +21,4 @@ button,.button{display:inline-flex;align-items:center;justify-content:center;gap
 /* Hardware outputs read like a quiet equipment list, separate from melody cards. */
 .audioStatus{margin:1.2rem 0;padding:1rem 1.2rem;border-left:3px solid var(--accent,#58dccc);background:rgba(88,220,204,.045)}
 .audioStatus p{margin:.35rem 0;overflow-wrap:anywhere}.audioDevices{padding:0;list-style:none}.audioDevices li{display:flex;flex-direction:column;gap:.35rem;padding:1rem 0;border-bottom:1px solid rgba(255,255,255,.08);overflow-wrap:anywhere}.audioDevices span{color:#91a1b2;font-size:.9em}#gatewayRingVolume{width:100%;min-height:48px}#gatewayAudioForm label{min-width:0}#gatewayOutput{max-width:100%}
+header{flex-wrap:wrap}header .clock{max-width:100%;overflow-wrap:anywhere}

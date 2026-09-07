@@ -48,3 +48,18 @@ chosen output; automatic desktop-session integration is outside this first backe
 References: [kernel ALSA proc files](https://www.kernel.org/doc./html/next/sound/designs/procfile.html),
 [ALSA PCM API](https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html),
 [Raspberry Pi audio configuration](https://www.raspberrypi.com/documentation/configuration/computers/raspberry-pi.html).
+
+## Administrator API
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /v1/gateway-audio` | Settings, cached output inventory, actual output, status and test state |
+| `POST /v1/gateway-audio` | Save exactly `enabled` (boolean), `volume` (integer 0–100), `output` (`auto` or opaque enumerated preference ID) |
+| `POST /v1/gateway-audio/test` | `{"stop":false}` requests a short test; `{"stop":true}` cancels tests only |
+
+These reuse administrator authentication, not a phone device grant. An unavailable
+saved device remains a preference and falls back; client-supplied strings are never
+passed as shell commands or arbitrary PCM names. Discovery does not include private
+USB serial values in API responses. The actual `aplay` target is resolved from the
+current local inventory. Diagnostic states describe writes/playback attempts, not
+physical audibility. Save errors preserve the last committed in-memory settings.
