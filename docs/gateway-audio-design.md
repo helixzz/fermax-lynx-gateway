@@ -20,7 +20,8 @@ not browser devices or virtual recording endpoints. `aplay` opens a specific
 `plughw` endpoint without changing the OS default. Automatic selection orders USB,
 analog, HDMI; other hardware remains manually selectable. Device preference keys
 use physical identity (USB serial when available, otherwise physical port path),
-not a volatile card number. Identical unnumbered USB devices remain port-dependent.
+not a volatile card number. Only the temporary playback target uses the currently
+enumerated numeric index, so unusual driver card names do not hide valid outputs. Identical unnumbered USB devices remain port-dependent.
 Names and actual output are shown separately from the saved preference.
 
 A manually preferred device falls back through the automatic order when missing

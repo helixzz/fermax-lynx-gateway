@@ -25,7 +25,7 @@ def outputs(proc=Path('/proc/asound'), sys_sound=Path('/sys/class/sound')):
     for card in proc.glob('card[0-9]*'):
         try:
             card_id = (card/'id').read_text().strip()
-            if not re.fullmatch(r'[A-Za-z0-9_]+', card_id):
+            if not re.fullmatch(r'card[0-9]+', card.name):
                 continue
             physical = (sys_sound/card.name/'device').resolve()
             usb = next((p for p in (physical, *physical.parents) if (p/'idVendor').is_file()), None)
@@ -45,7 +45,7 @@ def outputs(proc=Path('/proc/asound'), sys_sound=Path('/sys/class/sound')):
                 kind = 'usb' if usb else 'hdmi' if 'hdmi' in descriptor or 'displayport' in descriptor else 'analog' if any(x in descriptor for x in ('headphone','analog','bcm2835')) else 'other'
                 stable = hashlib.sha256((identity+':pcm'+number[1]).encode()).hexdigest()
                 devices.append({'id':stable, 'name':card_id+' · '+name, 'kind':kind,
-                                'pcm':'plughw:CARD='+card_id+',DEV='+number[1]})
+                                'pcm':'plughw:CARD='+card.name[4:]+',DEV='+number[1]})
         except (OSError, ValueError):
             # Hot removal during enumeration is expected.
             continue

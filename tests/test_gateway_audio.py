@@ -120,12 +120,13 @@ class DiscoveryTests(unittest.TestCase):
             root=Path(tmp);proc=root/'proc';sound=root/'sys';physical=root/'devices'/'usb-port'
             physical.mkdir(parents=True);(physical/'idVendor').write_text('0001');(physical/'idProduct').write_text('0002');(physical/'serial').write_text('synthetic')
             def make(n):
-                card=proc/f'card{n}';(card/'pcm0p').mkdir(parents=True);(card/'pcm0c').mkdir();(card/'id').write_text('SyntheticUSB');(card/'pcm0p/info').write_text('name: USB Speaker\n')
+                card=proc/f'card{n}';(card/'pcm0p').mkdir(parents=True);(card/'pcm0c').mkdir();(card/'id').write_text('Synthetic-USB');(card/'pcm0p/info').write_text('name: USB Speaker\n')
                 link=sound/f'card{n}';link.mkdir(parents=True);(link/'device').symlink_to(physical)
             make(0);first=outputs(proc,sound);self.assertEqual(len(first),1);self.assertEqual(first[0]['kind'],'usb')
             import shutil
             shutil.rmtree(proc/'card0');shutil.rmtree(sound/'card0');make(4)
             self.assertEqual(first[0]['id'],outputs(proc,sound)[0]['id'])
+            self.assertNotEqual(first[0]['pcm'],outputs(proc,sound)[0]['pcm'])
     def test_builtin_pcm_properties(self):
         from fermax.phone_preferences import CATALOG
         import array

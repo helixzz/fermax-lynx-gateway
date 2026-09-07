@@ -2,7 +2,7 @@
   "kind": "synthetic-ui-demo",
   "browser": "chromium",
   "source_sha256": {
-    "fermax/gateway_audio.py": "f520e8d3296d30bb5f66727b6e0c13f4434ee9fc394ae8080bf6ec1192d703f5",
+    "fermax/gateway_audio.py": "f44d0d76d9c6b28bacc392ca14647c60e9f81f3dafa9167b28eeaea3844e7414",
     "fermax/display.py": "7c4d2da62f1aced56b289e5e18b0af495b58e72dfc3ee0578201bc890d0849b5",
     "fermax/web/gateway-audio.js": "c16f6073b8715083a0e1f585803d9833782f7a46c35ee9bacb259de26e3a7aec",
     "fermax/state.py": "cc2c02aff99427e7bf07c885db769c4d6dd4c14362be5592899bfa5d2e04aec1",
@@ -108,7 +108,7 @@
     },
     {
       "file": "clock-analog.webp",
-      "sha256": "29b8fe1020ccf379e49cacd18dda2a854d4fccde99f03330553ca903e3faa259"
+      "sha256": "42df2e444a5d5491919bb9df09e16bab628e1ba924971fb54ddeac3e385633c3"
     },
     {
       "file": "clock-nixie.webp",
