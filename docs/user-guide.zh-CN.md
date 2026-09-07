@@ -154,3 +154,9 @@ python3 -m fermax.admin --state-dir /var/lib/fermax password
 ## 网关扬声器
 
 无需话机也可响铃；默认开启，支持 USB → 模拟 → HDMI 自动输出、独立音量与 Web/实体屏幕设置。详见[网关独立响铃手册](gateway-audio.md)，包含短时测试、故障降级和首次升级默认开启的说明。
+
+## 今日活动与图标
+
+管理员 Web 概览和树莓派首页显示今日来电与已确认开门；话机待机以图标加数字呈现，仅统计获授权入口。轻触图标可查看含义，断线显示 —。开门数是协议确认，不是物理门状态。
+
+[统计口径与预览 · Counting rules and previews](daily-statistics.md)

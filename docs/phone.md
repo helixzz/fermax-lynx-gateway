@@ -150,3 +150,7 @@ establish physical-device or production readiness.
 See [ringtone catalog and source notes](ringtones.md) for the offline library and code downgrade considerations.
 
 The gallery also captures gateway sound and LCD pages. For reproduction, install `fonts-wqy-microhei` or set `DEMO_FONT` to its `wqy-microhei.ttc` file. LCD images use the actual 480×320 renderer with synthetic state and no framebuffer device. Gateway sound is tested through a silent fake backend; see [gateway sound](gateway-audio.md).
+
+### Daily activity and icon controls
+
+The standby bell and door icons show daily incoming visits and confirmed openings for the phone's authorized entrances. A disconnected phone shows dashes. Focus/touch a count for its label; the controls panel retains a text explanation. Common status and mute/collapse controls use labelled SVG icons; open/end retain text. [Counting rules, persistence and previews](daily-statistics.md). Browser experience regression includes five/six-digit counts, four viewports, 200% zoom and focused tooltips.

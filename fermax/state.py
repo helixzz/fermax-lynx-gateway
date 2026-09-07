@@ -46,6 +46,8 @@ class State:
         self.db.execute('CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY, action TEXT NOT NULL, time REAL NOT NULL)')
         self.db.execute('CREATE INDEX IF NOT EXISTS events_kind_id ON events(kind,id)')
         self.db.commit()
+        from .statistics import Statistics
+        self.statistics = Statistics(self.db)
         self.policy = {'enabled': False, 'minutes': None, 'expires_at': None}
         self.deadline = None
         self.call, self.panel, self.relays = 'idle', None, []
@@ -95,8 +97,10 @@ class State:
                 detail.setdefault('call_id', self.call_id)
                 detail.setdefault('panel_id', self.panel_id)
             self.notice = text
-            self.db.execute('INSERT INTO events(time,kind,text,detail) VALUES(?,?,?,?)',
-                            (self.wall(), kind, text, json.dumps(detail or {}, ensure_ascii=False)))
+            stamp, raw = self.wall(), json.dumps(detail or {}, ensure_ascii=False)
+            row = self.db.execute('INSERT INTO events(time,kind,text,detail) VALUES(?,?,?,?)',
+                                  (stamp, kind, text, raw))
+            self.statistics.record(row.lastrowid, stamp, kind, raw)
             self.db.commit()
 
     def logs(self, before=None, limit=100, kind=None):
@@ -181,6 +185,7 @@ class State:
                     'panels':[{'id':p['id'],'name':p['name']} for p in self.config['panels']],
                     'auto':dict(self.policy), 'allow_open':self.allow_open, 'relays':list(self.relays),
                     'notice':self.notice, 'events':self.logs(limit=6),
+                    'statistics':self.statistics.snapshot(self.wall()),
                     'time':self.wall(), 'local_time':datetime.fromtimestamp(self.wall()).isoformat(),
                     'utc_offset':datetime.fromtimestamp(self.wall()).astimezone().utcoffset().total_seconds(),
                     'clock':dict(self.clock_status), 'video_ready':self.video_jpeg is not None and self.mono()-self.video_updated < 5,
@@ -195,6 +200,7 @@ class State:
             permitted = self.panel_id is None or self.panel_id in panels
             result = {k:full[k] for k in ('network', 'call', 'call_id', 'panel', 'panel_id',
                       'direction', 'auto', 'time', 'local_time', 'utc_offset', 'audio_available', 'phone_preferences', 'ring_preferences', 'call_age')}
+            result['statistics'] = self.statistics.snapshot(self.wall(), panels)
             result['clock_synchronized'] = full['clock']['synchronized']
             result['panels'] = [p for p in full['panels'] if p['id'] in panels]
             result['video_ready'] = permitted and full['video_ready']

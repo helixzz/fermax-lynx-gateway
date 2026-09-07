@@ -15,6 +15,37 @@
     open_manual:'门口机确认开门', open_auto:'自动开门已确认', open_unknown:'开门结果未知',
     open_denied:'开门被拒绝', control_failed:'操作未完成'};
 
+  const icons = {
+    bell:'M6 8a6 6 0 0 1 12 0v5l3 4H3l3-4V8m4 12h4',
+    door:'M4 21V3h12v18M8 21h12V6l-8-3v18m3-9h.01',
+    link:'M9 15l6-6M8 17l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 0 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0',
+    network:'M3 8a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0m-9 4a5 5 0 0 1 6 0m-3 4h.01',
+    auto:'M4 10a8 8 0 0 1 14-4l2 2m0-5v5h-5M20 14a8 8 0 0 1-14 4l-2-2m0 5v-5h5',
+    down:'m5 9 7 7 7-7', camera:'M3 5h12v14H3zm12 5 6-3v10l-6-3',
+    end:'M5 5l14 14M19 5 5 19', settings:'M4 7h16M4 17h16M8 4v6m8 4v6'
+  };
+  function icon(node, name, label, iconOnly=false, inactive=false) {
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('ui-icon');
+    const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',icons[name]);svg.append(path);
+    if(inactive){const slash=document.createElementNS(svg.namespaceURI,'path');slash.setAttribute('d','M3 3 21 21');svg.append(slash);}
+    const text=document.createElement('span');text.textContent=label;if(iconOnly)text.className='sr-only';
+    node.replaceChildren(svg,text);node.setAttribute('aria-label',label);node.title=label;
+  }
+  function status(id,name,label,inactive=false){const node=$(id);icon(node,name,label,true,inactive);node.dataset.inactive=String(inactive);}
+  function statistics() {
+    const stats=state && state.statistics;
+    const valid=online && stats && stats.available;
+    for(const [id,name,key,label] of [['#todayIncoming','bell','incoming','今日来电'],['#todayOpenings','door','openings','今日已确认开门']]){
+      const number=valid?String(stats[key]):'—';
+      const detail=!online?'连接中断，统计不可用':!valid?'统计暂不可用':stats.date+' · '+label+' '+number+' 次'+(!state.clock_synchronized?' · 网关时间未同步':'')+(key==='openings'?' · 协议确认，非物理门状态':'');
+      icon($(id),name,number);$(id).setAttribute('aria-label',detail);$(id).title=detail;
+    }
+  }
+  icon($('#hideControls'),'down','收起操作面板',true);
+  icon($('#open'),'door','开门');
+  icon($('#wakeSurface > span'),'settings','显示话机操作面板',true);
+
   function message(text, transient=false) { clearTimeout(messageTimer); $('#message').textContent = text; if (transient) messageTimer = setTimeout(() => { $('#message').textContent = ''; },4000); }
   async function request(path, data) {
     const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 10000);
@@ -34,7 +65,9 @@
   }
   function offline(text) {
     online = false; sound.stop(); ringStartedFor = null; document.body.classList.add('offline');
-    $('#gatewayStatus').textContent = '○ '+text;
+    status('#gatewayStatus','link',text,true);
+    status('#networkStatus','network','连接中断，门禁状态待同步',true);
+    status('#autoStatus','auto','连接中断，自动开门状态待同步',true); statistics();
     clearPicture(); buttons();
     $('#pictureHint').hidden = false; $('#pictureHint').textContent = '连接已中断，等待恢复';
     if (pending) { message('连接中断，操作结果未知；不会自动重试。'); pending = null; }
@@ -74,9 +107,9 @@
     lastMessage = performance.now(); online = true; attempt = 0; authorizationRetry = false;
     $('#setup').hidden = true; $('#phone').hidden = false;
     document.body.classList.remove('offline');
-    $('#gatewayStatus').textContent = '● 网关已连接';
-    $('#networkStatus').textContent = state.network === 'ready' ? '● 门禁已连接' : '○ 门禁未就绪';
-    $('#autoStatus').textContent = state.auto.enabled ? '◉ 自动开门 · '+(state.auto.minutes === 0 ? '无时限' : '已启用') : '○ 自动开门已关闭';
+    status('#gatewayStatus','link','网关已连接'); statistics();
+    status('#networkStatus','network',state.network === 'ready' ? '● 门禁已连接' : '○ 门禁未就绪',!state || state.network !== 'ready');
+    status('#autoStatus','auto',state.auto.enabled ? '◉ 自动开门 · '+(state.auto.minutes === 0 ? '无时限' : '已启用') : '○ 自动开门已关闭',!state.auto.enabled);
     const active = !!state.call_id;
     document.body.classList.toggle('in-call',active);
     const preferences = state.phone_preferences || {ringtone:'chime',ring_seconds:30};
@@ -85,20 +118,20 @@
       sound.stop(); ringStartedFor = null;
       currentCall = state.call_id; mutedCall = null; ringPlan = Object.assign({},state.ring_preferences || preferences); clearPicture();
       try { if (sessionStorage.getItem('lynx-muted-call') === currentCall) mutedCall = currentCall; } catch (_) {}
-      $('#mute').textContent = mutedCall ? '铃声已静音' : '本次静音';
+      icon($('#mute'),'bell',mutedCall ? '铃声已静音' : '本次静音',true,!!mutedCall);
       if (active) { document.body.classList.remove('dim'); $('#controls').hidden = true; message(''); }
     }
     $('#idle').hidden = active; $('#call').hidden = !active;
     $('#panelName').textContent = state.panel || '门口机';
     $('#callKind').textContent = state.direction === 'outgoing' ? '门口机预览' : '有访客 · 来访视频';
-    $('#hangup').textContent = state.direction === 'outgoing' ? '结束预览' : '结束来访';
+    icon($('#hangup'),'end',state.direction === 'outgoing' ? '结束预览' : '结束来访');
     if (!state.video_ready) { clearPicture(); $('#pictureHint').hidden = false; $('#pictureHint').textContent = active ? '等待新鲜视频画面' : ''; }
     else if (!imageURL) { $('#pictureHint').hidden = false; $('#pictureHint').textContent = '正在获取视频画面'; }
     const key = JSON.stringify(state.panels);
     if ($('#panels').dataset.panels !== key) {
       $('#panels').dataset.panels = key; $('#panels').replaceChildren();
       state.panels.forEach(panel => { const button = document.createElement('button');
-        button.textContent = '查看 '+panel.name; button.addEventListener('click', () => control('preview',panel.id)); $('#panels').append(button); });
+        icon(button,'camera',panel.name);button.setAttribute('aria-label','查看 '+panel.name);button.title='查看 '+panel.name; button.addEventListener('click', () => control('preview',panel.id)); $('#panels').append(button); });
     }
     $('#recent').replaceChildren();
     state.events.forEach(event => { const item = document.createElement('li');
@@ -224,12 +257,12 @@
     return ringPlan ? Math.max(0,ringPlan.ring_seconds-(state.call_age || 0)-(performance.now()-sampledAt)/1000) : 0;
   }
   function ring() {
-    if (state && state.call_id) $('#mute').textContent = mutedCall === state.call_id ? '铃声已静音' : sound.enabled ? '本次静音' : '启用铃声';
-    if (!sound.enabled) { if (sound.mode === 'call') sound.stop(); $('#soundStatus').textContent = '♪ 铃声未启用'; return; }
+    if (state && state.call_id) icon($('#mute'),'bell',mutedCall === state.call_id ? '铃声已静音' : sound.enabled ? '本次静音' : '启用铃声',true,!!mutedCall);
+    if (!sound.enabled) { if (sound.mode === 'call') sound.stop(); status('#soundStatus','bell','♪ 铃声未启用',!sound.enabled || !!mutedCall || !Number($('#volume').value)); return; }
     const volume = Number($('#volume').value)/100;
     const eligible = online && state && !document.hidden && state.direction === 'incoming' && ['ringing','early_video'].includes(state.call) && mutedCall !== state.call_id;
     const remaining = eligible ? ringRemaining() : 0;
-    $('#soundStatus').textContent = mutedCall && state && mutedCall === state.call_id ? '♪ 本次已静音' : !volume ? '♪ 铃声音量为零' : eligible && remaining <= 0 ? '♪ 本次响铃已结束' : '♪ 铃声已启用';
+    status('#soundStatus','bell',mutedCall && state && mutedCall === state.call_id ? '♪ 本次已静音' : !volume ? '♪ 铃声音量为零' : eligible && remaining <= 0 ? '♪ 本次响铃已结束' : '♪ 铃声已启用',!sound.enabled || !!mutedCall || !Number($('#volume').value));
     if (!eligible || remaining <= 0 || !volume) { if (sound.mode === 'call') sound.stop(); return; }
     if (ringStartedFor === state.call_id) return;
     const call = state.call_id; ringStartedFor = call;
@@ -252,7 +285,7 @@
       if (state && state.direction === 'incoming' && ringRemaining() > 0 && mutedCall !== state.call_id) { ringStartedFor = null; ring(); }
       else await sound.play(state && state.phone_preferences || {ringtone:'chime'},3,Number($('#volume').value)/100,'preview');
       message('正在试听，请确认设备音量。',true); await keepAwake();
-    } catch (_) { $('#soundStatus').textContent = '♪ 铃声被阻止'; message('浏览器未允许铃声或音乐不可用，请再次轻触启用并检查静音设置。'); }
+    } catch (_) { status('#soundStatus','bell','♪ 铃声被阻止',!sound.enabled || !!mutedCall || !Number($('#volume').value)); message('浏览器未允许铃声或音乐不可用，请再次轻触启用并检查静音设置。'); }
   });
   $('#clockStyle').addEventListener('change',event => { clock.value.style = event.target.value; clock.save(); updateClock(); });
   $('#secondsMode').addEventListener('change',event => { clock.value.seconds = event.target.value; clock.save(); updateClock(); });
@@ -276,7 +309,7 @@
       catch (_) { message('浏览器未允许铃声，请检查设备音量后重试。'); }
       return;
     }
-    mutedCall = state && state.call_id; sound.stop(); try { sessionStorage.setItem('lynx-muted-call',mutedCall); } catch (_) {} $('#mute').textContent = '铃声已静音'; });
+    mutedCall = state && state.call_id; sound.stop(); try { sessionStorage.setItem('lynx-muted-call',mutedCall); } catch (_) {} icon($('#mute'),'bell','铃声已静音',true,!!mutedCall); });
   $('#logout').addEventListener('click', async () => {
     try { await request('/v1/phone/session/logout', {}); await setup('此话机授权已撤销。'); }
     catch (error) { message('未能撤销设备，请恢复连接后重试：'+error.message); }

@@ -159,3 +159,9 @@ that version cannot load the new IDs. Preserve current credentials/device grants
 ## Gateway speaker
 
 Version 0.5.0 rings independently of browser phones, defaults on, and supports automatic USB → analog → HDMI routing with separate gain and Web/LCD settings. Read the [gateway sound guide](gateway-audio.md#english-quick-guide) for testing, fallback, installation and first-upgrade behavior.
+
+## Daily activity and icons
+
+The Web overview and local LCD show daily incoming visits and confirmed openings. Idle phones use icons and counts scoped to their authorized entrances; touch an icon for its meaning. Offline counts show —. Openings are protocol confirmations, not physical door-state measurements.
+
+[统计口径与预览 · Counting rules and previews](daily-statistics.md)

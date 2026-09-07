@@ -29,3 +29,7 @@ Supported actions: preview, open, hangup. Answer is reserved and currently rejec
 A positive panel response yields open_manual/open_auto; rejection yields open_denied; a timeout yields open_unknown without an automatic retry. All logs are local, persistent and potentially sensitive. Do not upload them publicly without redaction.
 
 The current HTTP server rejects cross-origin browser POST requests. It does not trust forwarded headers, implement CORS or provide an HTTPS reverse-proxy configuration. Credentials and controls should remain on the trusted LAN until HTTPS support is added. Passwords are 12–128 characters, stored with PBKDF2-HMAC-SHA256, a random salt and 600,000 iterations. Changing a password does not change an independently issued API token.
+
+## Daily statistics
+
+Administrator `/v1/state`, scoped `/v1/phone/state` and phone SSE `state` add `statistics`: `{ "date": "2030-05-18", "available": true, "incoming": 7, "openings": 4 }`. The date follows the gateway local calendar. Unavailable values are null, not zero. Phone counts are filtered by its authorized panel IDs before serialization. No additional public endpoint or permission is added. See [counting rules and persistence](daily-statistics.md).

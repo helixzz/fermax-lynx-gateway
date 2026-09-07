@@ -32,6 +32,7 @@
           <svg class="analog-clock" viewBox="0 0 320 320" aria-hidden="true"><circle class="dial-face" cx="160" cy="160" r="152"/><g id="dialTicks"></g><g class="dial-numbers"><text x="160" y="63">12</text><text x="263" y="168">3</text><text x="160" y="273">6</text><text x="57" y="168">9</text></g><text class="dial-brand" x="160" y="113">LYNX</text><g class="hands"><line id="hourHand" x1="160" y1="175" x2="160" y2="91"/><line id="minuteHand" x1="160" y1="179" x2="160" y2="53"/><line id="secondHand" x1="160" y1="190" x2="160" y2="43"/></g><circle class="dial-pin" cx="160" cy="160" r="5"/></svg>
           <div class="nixie-clock" aria-hidden="true"><span class="tube"><span class="tube-digit">0</span></span><span class="tube"><span class="tube-digit">0</span></span><span class="tube-colon">:</span><span class="tube"><span class="tube-digit">0</span></span><span class="tube"><span class="tube-digit">0</span></span><span class="tube-seconds"><span class="tube"><span class="tube-digit">0</span></span><span class="tube"><span class="tube-digit">0</span></span></span></div>
         </div><p id="date">正在获取网关时间</p>
+        <div class="daily-stats" aria-label="今日活动，仅授权门口机"><span id="todayIncoming" class="with-tip" role="img" tabindex="0"></span><span id="todayOpenings" class="with-tip" role="img" tabindex="0"></span></div>
         <button id="wakeSurface" class="wake-surface" aria-label="显示话机操作面板"><span>轻触，唤出操作 <span aria-hidden="true">↑</span></span></button>
       </div>
       <section id="call" class="call" hidden aria-label="当前来访">
@@ -43,12 +44,12 @@
         <div class="controls-head"><h2>让话机，像你的家。</h2><button id="hideControls" aria-label="收起操作面板">收起 ↓</button></div>
         <div id="panels" class="panel-buttons"></div>
         <div class="display-preferences"><label>时钟样式<select id="clockStyle"><option value="editorial">雅致 · 数字时钟</option><option value="digital">清晰 · 电子时钟</option><option value="analog">经典 · 模拟表盘</option><option value="nixie">暖光 · 电子管</option></select></label><label>秒针 / 秒数<select id="secondsMode"><option value="hidden">隐藏 · 安静显示</option><option value="step">显示 · 每秒跳动</option><option value="sweep">显示 · 表盘平滑扫秒</option></select></label></div>
-        <p class="preference-note">显示偏好只用于这台设备。铃声音乐与时长由管理员统一设置。</p>
+        <p class="preference-note">待机图标：门铃数字是今日来电，门扇数字是今日已确认开门（含手动与自动，仅协议确认）。仅统计此话机获授权的入口，按网关本地日期换日。轻触图标可查看提示。</p><p class="preference-note">显示偏好只用于这台设备。铃声音乐与时长由管理员统一设置。</p>
         <div class="preferences"><button id="enableSound">启用并试听铃声</button><label>铃声音量<input id="volume" type="range" min="0" max="100" value="35"></label><button id="logout">退出并撤销此话机</button></div>
         <p id="ringSetting" class="preference-note"></p><p id="wakeHint">前台常驻使用。请在系统设置中调整自动锁定；后台与锁屏不会保证响铃。</p>
         <details class="recent"><summary>最近活动</summary><ol id="recent"></ol></details>
       </section>
-      <footer class="statusbar"><span id="gatewayStatus">◌ 网关连接中</span><span id="networkStatus">○ 门禁待连接</span><span id="autoStatus">○ 自动开门待同步</span><span id="soundStatus">♪ 铃声未启用</span></footer>
+      <footer class="statusbar"><span id="gatewayStatus" role="img" tabindex="0" class="with-tip">◌ 网关连接中</span><span id="networkStatus" role="img" tabindex="0" class="with-tip">○ 门禁待连接</span><span id="autoStatus" role="img" tabindex="0" class="with-tip">○ 自动开门待同步</span><span id="soundStatus" role="img" tabindex="0" class="with-tip">♪ 铃声未启用</span></footer>
     </section>
     <p id="message" class="message" role="status" aria-live="polite"></p>
   </main>

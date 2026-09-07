@@ -7,6 +7,12 @@ async function api(path,data){
   finally{clearTimeout(timeout)}
 }
 const error=e=>{$('#error').textContent=e.message};
+function renderStatistics(stats){
+  const valid=stateOnline && stats && stats.available;
+  $('#statsIncoming').textContent=valid?stats.incoming:'—';$('#statsOpenings').textContent=valid?stats.openings:'—';
+  $('#statsDate').textContent=stats?stats.date:'';
+  $('#statsStatus').textContent=!stateOnline?'连接中断，统计不可用':!valid?'统计暂不可用':'网关本地日期 · 开门含手动与自动协议确认，不代表物理门状态。';
+}
 function renderAuto(){
   const enabled=autoPolicy && autoPolicy.enabled;
   $('#autoSetup').hidden=!stateOnline||!!enabled;
@@ -21,8 +27,8 @@ $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();try{await
 async function refreshState(){
   let s;
   try{s=await api('/v1/state');}
-  catch(e){stateOnline=false;clearAdminFrame();renderAuto();$('#network').textContent='网关连接中断';document.querySelectorAll('[data-action]').forEach(button=>button.disabled=true);$('#video').hidden=true;$('#videoHint').hidden=false;if(logged)error(e);return false}
-  logged=true;stateOnline=true;autoPolicy=s.auto;$('#workspace').hidden=false;$('#login').hidden=true;renderAuto();
+  catch(e){stateOnline=false;clearAdminFrame();renderAuto();renderStatistics(null);$('#network').textContent='网关连接中断';document.querySelectorAll('[data-action]').forEach(button=>button.disabled=true);$('#video').hidden=true;$('#videoHint').hidden=false;if(logged)error(e);return false}
+  logged=true;stateOnline=true;renderStatistics(s.statistics);if(!s.clock.synchronized)$('#statsStatus').textContent+=' 网关时间未同步。';autoPolicy=s.auto;$('#workspace').hidden=false;$('#login').hidden=true;renderAuto();
   $('#identity').textContent=s.identity.building+' · '+s.identity.unit;renderPanels(s.panels);
   $('#clock').textContent=new Date(s.time*1000).toLocaleTimeString('zh-CN',{hour12:false});
   $('#clockSource').textContent=(s.clock.synchronized?'已对时 · ':'未同步 · ')+(s.clock.source==='dhcp'?'DHCP NTP':'公共 NTP');
@@ -65,7 +71,7 @@ function renderPanels(panels){const key=JSON.stringify(panels);if(key===panelKey
 $('#enableAuto').addEventListener('click',()=>changeAuto(Number($('#duration').value)));
 $('#disableAuto').addEventListener('click',()=>changeAuto(null));
 $('#logout').addEventListener('click',()=>api('/v1/logout',{}).then(logoutView).catch(error));
-window.addEventListener('offline',()=>{stateOnline=false;clearAdminFrame();renderAuto()});
+window.addEventListener('offline',()=>{stateOnline=false;clearAdminFrame();renderAuto();renderStatistics(null)});
 window.addEventListener('online',()=>{if(logged)update()});
 document.addEventListener('visibilitychange',()=>{if(logged&&!document.hidden)update()});
 async function logs(older){loadedOlder=older;const q=new URLSearchParams({limit:'50',kind:$('#kind').value});if(older&&before)q.set('before',before);const result=await api('/v1/logs?'+q);if(!older)$('#events').replaceChildren();for(const e of result.events){const tr=document.createElement('tr');for(const value of [new Date(e.time*1000).toLocaleString('zh-CN'),e.text]){const td=document.createElement('td');td.textContent=value;tr.append(td)}const td=document.createElement('td'),details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');summary.textContent=e.kind;pre.textContent=JSON.stringify(e.detail,null,2);details.append(summary,pre);td.append(details);tr.append(td);$('#events').append(tr)}before=result.next_before;$('#older').disabled=result.events.length<50}

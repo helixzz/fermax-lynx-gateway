@@ -106,3 +106,9 @@ from a downloaded checkout to browse all previews without running a gateway.
 MIT for the original implementation; dependencies retain their licenses. FERMAX,
 VIVO and LYNX identify compatibility targets. This project is not affiliated with
 or endorsed by their owners.
+
+### 今日活动，抬眼可见
+
+管理员 Web 与实体屏幕显示今日来电和已确认开门；话机待机用图标与数字安静呈现。统计跨重启保留，按网关本地日期换日，每台话机仅显示授权入口。开门计数表示协议确认，不是物理门状态。[了解统计与图标](docs/daily-statistics.md)。
+
+![今日活动](docs/demo/admin-statistics.webp)

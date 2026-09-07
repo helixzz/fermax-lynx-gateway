@@ -265,20 +265,26 @@ class Display:
                     button((165,264,312,314), '下一页')
                     button((322,264,472,314), '返回')
                 else:
-                    for index, event in enumerate(s['events'][:3]):
+                    stats = s.get('statistics', {})
+                    def count(key):
+                        value = stats.get(key)
+                        return str(value) if stats.get('available') and isinstance(value, int) and value < 10000 else ('9999+' if stats.get('available') and isinstance(value, int) else '—')
+                    text(12,98,'今日来电 '+count('incoming'),'#8fa4bc')
+                    text(12 if s['video_ready'] else 235,122 if s['video_ready'] else 98,'已确认开门 '+count('openings'),'#8fa4bc')
+                    for index, event in enumerate(s['events'][:1] if s['video_ready'] else s['events'][:2]):
                         stamp = datetime.fromtimestamp(event['time']).strftime('%H:%M')
                         line = stamp+' '+event['text']
                         width = 305 if s['video_ready'] else 455
                         while d.textlength(line, font=self.font) > width:
                             line = line[:-2]+'…'
-                        text(12, 104+24*index, line, '#b6c6da')
+                        text(12, (150 if s['video_ready'] else 126)+24*index, line, '#b6c6da')
                     if s['video_ready']:
                         with self.state.lock:
                             jpeg = self.state.video_jpeg
                         if jpeg:
                             preview = self.Image.open(io.BytesIO(jpeg))
-                            preview.thumbnail((144,108))
-                            image.paste(preview,(328,70))
+                            preview.thumbnail((100,75))
+                            image.paste(preview,(368,100))
                     button((8,185,155,239), s['panels'][0]['name'][:7])
                     button((165,185,312,239), s['panels'][1]['name'][:7] if len(s['panels'])>1 else '未配置')
                     button((322,185,472,239), '接听', '#243952' if s['audio_available'] else '#17263a')
