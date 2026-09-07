@@ -84,3 +84,5 @@ A compatible site has confirmed automatic opening followed by its existing eleva
 ## License
 
 MIT for this repository's original implementation. Third-party packages retain their own licenses. FERMAX, VIVO and LYNX names identify compatibility targets; this project is not affiliated with or endorsed by their owners.
+
+Versioning and release history: [release policy](docs/releases.md) · [changelog](CHANGELOG.md).
