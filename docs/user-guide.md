@@ -2,8 +2,8 @@
 
 [Home](../README.md) · [中文完整手册](user-guide.zh-CN.md) · [Every screen](demo-gallery.md)
 
-This guide covers version 0.3.0, including clock themes, configurable music and the
-redesigned video page. All previews use synthetic data;
+This guide covers the development branch after v0.3.0. The 16-track library and
+revised administrator layout are not yet in that tagged release. All previews use synthetic data;
 check the [changelog](../CHANGELOG.md) before choosing a release. UI labels are Chinese.
 
 ## Install and connect
@@ -61,8 +61,9 @@ background and locked-screen ringing are not guaranteed.
 
 ## Administrator music settings
 
-In **设备与密码设置**, choose a built-in melody or upload custom music. **试听 3 秒**
-previews the selection; **停止试听** stops it. Save **15, 30, 45 or 60 seconds** of
+In **设备与密码设置 → 铃声音乐**, choose one of 16 original phrases or upload custom music.
+Track cards select and audition; **试听所选** plays one built-in phrase (up to 8 seconds
+for custom music); **停止试听** stops it. Save **15, 30, 45 or 60 seconds** of
 looping, with **30 seconds** as the default. New settings apply to the next incoming
 visit on all tablets, without changing automatic opening or restarting the service.
 
@@ -136,3 +137,21 @@ independent and rotate with the `api-token` subcommand.
 Old iPadOS 15, real tablet sound and 72-hour/seven-day endurance validation remain
 outstanding. Voice, recording, webhooks, MCP and HTTPS are outside current scope.
 See the [complete gallery](demo-gallery.md) for every normal and exceptional screen.
+
+## Administrator navigation and policy state
+
+The top navigation separates tablet mode from settings. Settings are grouped into
+music, tablet devices, gateway configuration and password. **返回概览** returns to
+the visitor view and journal.
+
+An inactive automatic-opening policy shows the duration and Enable. An active policy
+shows its end time or Unlimited and only **停止自动开门** (Stop). After confirmed stop
+or expiry, Enable returns. Pending requests prevent duplicate submission; disconnected
+pages hide policy controls until server state is known again. Another administrator's
+changes appear on the next state refresh.
+
+![Enabled automatic opening with Stop only](demo/admin-auto-unlimited.webp)
+
+See [music provenance, offline audition and downgrade notes](ringtones.md). Before
+rolling back to v0.3.0, save one of its original three IDs or existing custom music;
+that version cannot load the new IDs. Preserve current credentials/device grants.

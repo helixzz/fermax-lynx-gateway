@@ -19,4 +19,4 @@ fermax-admin = "fermax.admin:main"
 include = ["fermax*"]
 
 [tool.setuptools.package-data]
-fermax = ["web/*.html", "web/*.js", "web/*.css"]
+fermax = ["web/*.html", "web/*.js", "web/*.css", "web/*.json"]

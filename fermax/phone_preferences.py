@@ -5,11 +5,13 @@ import json
 import os
 import threading
 import wave
+from pathlib import Path
 
 from .state import atomic_json
 
 MAX_MUSIC_BYTES = 6 * 1024 * 1024
-RINGTONES = ('chime', 'harbor', 'marimba', 'custom')
+CATALOG = json.loads((Path(__file__).parent/'web/ringtones.json').read_text())
+RINGTONES = tuple(track['id'] for track in CATALOG) + ('custom',)
 DURATIONS = (15, 30, 45, 60)
 
 

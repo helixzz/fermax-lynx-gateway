@@ -1,10 +1,10 @@
 # 界面图集 · Interface gallery
 
-这些 0.3.0 版本预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show version 0.3.0 using synthetic data.
+这些后续开发版预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show the development version after 0.3.0 using synthetic data.
 
 [中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)
 
-下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览。GitHub 页面可直接浏览以下全部截图。
+下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。
 
 ## 书页时钟 · Editorial
 
@@ -113,6 +113,42 @@
 撤销后退出话机，重新授权才能使用。
 
 ![授权撤销 · Revoked](demo/phone-revoked.webp)
+
+## 限时自动开门 · Timed policy
+
+已启用时仅显示状态、截止时间和停止按钮。
+
+![限时自动开门 · Timed policy](demo/admin-auto-timed.webp)
+
+## 无时限自动开门 · Unlimited policy
+
+只提供停止操作，隐藏再次启用和时长选择。
+
+![无时限自动开门 · Unlimited policy](demo/admin-auto-unlimited.webp)
+
+## 管理页失联 · Unknown policy state
+
+无法确认服务器状态时隐藏策略操作，恢复后重新读取。
+
+![管理页失联 · Unknown policy state](demo/admin-offline.webp)
+
+## 放大管理页 · 200% layout
+
+导航自然换行，入口按钮不重叠。
+
+![放大管理页 · 200% layout](demo/admin-zoom.webp)
+
+## 设置导航 · Settings navigation
+
+铃声、话机设备、网关配置和密码按任务分区。
+
+![设置导航 · Settings navigation](demo/admin-settings.webp)
+
+## 16 首铃声 · Ringtone library
+
+点击选择并试听，保存后用于下一次来访。
+
+![16 首铃声 · Ringtone library](demo/admin-ringtone-library.webp)
 
 ## 管理员登录 · Sign in
 

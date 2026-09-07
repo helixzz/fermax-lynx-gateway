@@ -35,6 +35,15 @@ class PreferencesTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.settings.update({'ringtone':'custom','ring_seconds':30})
         self.assertFalse((self.folder/'policy.json').exists())
 
+    def test_all_catalog_choices_validate_and_persist(self):
+        from fermax.phone_preferences import CATALOG
+        self.assertEqual(len(CATALOG),16)
+        for track in CATALOG:
+            self.settings.update({'ringtone':track['id'],'ring_seconds':30})
+            self.assertEqual(PhonePreferences(self.folder).snapshot()['ringtone'],track['id'])
+            self.assertEqual(track['license'],'MIT')
+        with self.assertRaises(ValueError): self.settings.update({'ringtone':'unknown-track','ring_seconds':30})
+
     def test_music_is_private_bounded_and_replaced_without_metadata(self):
         first = self.settings.upload(music()+b'PRIVATE UPLOAD METADATA')
         self.assertTrue(first['custom_available'])
