@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+- Enlarge all four standby clocks to use tablet width and height, with extra space when seconds are hidden.
+- Add a user-triggered fullscreen/exit control with standard and legacy WebKit capability detection, clear refusal guidance, and Home Screen standalone support.
+- Refresh bilingual guides and synthetic previews; retain current authorization, sound and control settings.
+
 ## 0.6.1 — 2026-09-07
 
 - Simplify phone standby to a central clock, grouped date/counts and a corner settings entry; remove the idle masthead, slogan and permanent status strip.

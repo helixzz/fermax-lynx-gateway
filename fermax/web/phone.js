@@ -17,6 +17,7 @@
     open_denied:'开门被拒绝', control_failed:'操作未完成'};
 
   const icons = {
+    fullscreen:'M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5',
     bell:'M6 8a6 6 0 0 1 12 0v5l3 4H3l3-4V8m4 12h4',
     door:'M4 21V3h12v18M8 21h12V6l-8-3v18m3-9h.01',
     link:'M9 15l6-6M8 17l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 0 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0',
@@ -117,6 +118,12 @@
     if (!wall) return;
     const face=$('#clockFace'), width=face.clientWidth;
     if(width && face.style.getPropertyValue('--face-width')!==width+'px') face.style.setProperty('--face-width',width+'px');
+    const idle=$('#idle'), layout=getComputedStyle(idle);
+    // clientWidth uses layout units, so divide viewport height by CSS zoom as well.
+    const scale=idle.clientWidth ? idle.getBoundingClientRect().width/idle.clientWidth : 1;
+    const height=Math.max(80,window.innerHeight/(scale || 1)-parseFloat(layout.paddingTop)-parseFloat(layout.paddingBottom)-$('.idle-summary').offsetHeight-26);
+    const rounded=Math.floor(height)+'px';
+    if(face.style.getPropertyValue('--clock-height')!==rounded) face.style.setProperty('--clock-height',rounded);
     const now = clockDate(); clock.update(now);
     $('#date').textContent = now.toLocaleDateString('zh-CN', {timeZone:'UTC',month:'long',day:'numeric',weekday:'long'}) +
       (online && state && state.clock_synchronized ? '' : ' · 时间未同步');
@@ -309,6 +316,45 @@
       wakeLock.addEventListener('release', () => { $('#wakeHint').textContent = '保持亮屏已释放，请检查系统自动锁定设置。'; });
     } catch (_) { $('#wakeHint').textContent = '无法保持亮屏，请在系统设置中调整自动锁定。'; }
   }
+  const standaloneQuery=matchMedia('(display-mode: standalone)');
+  const homeScreenHint='iPad / iPhone：在 Safari 的分享菜单选择“添加到主屏幕”，再从图标打开。独立窗口可能需要重新授权话机。';
+  function fullscreenElement(){return document.fullscreenElement || document.webkitFullscreenElement;}
+  function fullscreenRequest(){
+    const root=document.documentElement;
+    if(typeof root.requestFullscreen==='function' && document.fullscreenEnabled!==false) return root.requestFullscreen;
+    if(typeof root.webkitRequestFullscreen==='function' && document.webkitFullscreenEnabled!==false) return root.webkitRequestFullscreen;
+    return null;
+  }
+  function updateFullscreen(){
+    const active=!!fullscreenElement(),standalone=navigator.standalone===true || standaloneQuery.matches;
+    const button=$('#fullscreenButton');
+    button.hidden=standalone && !active;
+    icon(button,'fullscreen',active?'退出全屏':fullscreenRequest()?'进入全屏':'如何全屏显示');
+    button.setAttribute('aria-pressed',String(active));
+    $('#fullscreenHint').textContent=active?'已进入全屏，可通过浏览器手势或此按钮退出。':standalone?'已从主屏幕以独立窗口打开。':fullscreenRequest()?'轻触进入全屏。常驻使用也可从主屏幕图标打开。':homeScreenHint;
+    requestAnimationFrame(updateClock);
+  }
+  function fullscreenFailed(){updateFullscreen();$('#fullscreenHint').textContent='浏览器未允许切换全屏。请重新轻触按钮，或使用主屏幕方式。'+homeScreenHint;}
+  $('#fullscreenButton').addEventListener('click', async () => {
+    try{
+      if(fullscreenElement()){
+        const exit=document.exitFullscreen || document.webkitExitFullscreen;
+        if(!exit) throw Error('Fullscreen exit unavailable');
+        await exit.call(document);
+      }else{
+        const request=fullscreenRequest();
+        if(!request){$('#fullscreenHint').textContent=homeScreenHint;return;}
+        // Invoke synchronously in the click handler, before any awaited work.
+        await request.call(document.documentElement);
+      }
+      updateFullscreen();
+    }catch(_){fullscreenFailed();}
+  });
+  for(const name of ['fullscreenchange','webkitfullscreenchange']) document.addEventListener(name,updateFullscreen);
+  for(const name of ['fullscreenerror','webkitfullscreenerror']) document.addEventListener(name,fullscreenFailed);
+  if(standaloneQuery.addEventListener) standaloneQuery.addEventListener('change',updateFullscreen);
+  else if(standaloneQuery.addListener) standaloneQuery.addListener(updateFullscreen);
+  updateFullscreen();
   $('#enableSound').addEventListener('click', async () => {
     try {
       await sound.enable(); soundFailed=false; attention();

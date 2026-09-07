@@ -41,3 +41,24 @@
 
 [data-clock=analog] .analog-clock{max-width:100%;height:auto}[data-clock=nixie] .nixie-clock{gap:min(12px,calc(var(--face-width,90vw)*.01));max-width:100%}.tube{width:min(176px,calc(var(--face-width,90vw)*.138));height:min(278px,calc(var(--face-width,90vw)*.22))}.tube-digit{font-size:min(188px,calc(var(--face-width,90vw)*.15))}.tube-colon{font-size:min(72px,calc(var(--face-width,90vw)*.07))}.tube-seconds{gap:min(6px,calc(var(--face-width,90vw)*.006));padding-bottom:min(10px,calc(var(--face-width,90vw)*.01))}.tube-seconds .tube{width:min(66px,calc(var(--face-width,90vw)*.05));height:min(130px,calc(var(--face-width,90vw)*.1))}.tube-seconds .tube-digit{font-size:min(80px,calc(var(--face-width,90vw)*.06))}
 .clock{font-size:min(310px,calc(var(--face-width,90vw)*.255))}.clock-seconds{font-size:min(68px,calc(var(--face-width,90vw)*.06))}
+
+/* Fill the available standby area, including tablet and standalone viewports. */
+.idle{padding-top:84px;padding-bottom:100px}
+.numeric-clock{gap:calc(var(--face-width,90vw)*.012)}
+.clock{font-size:min(calc(var(--face-width,90vw)*.36),calc(var(--clock-height,60vh)*.85))}
+.clock-seconds{font-size:min(calc(var(--face-width,90vw)*.065),calc(var(--clock-height,60vh)*.17))}
+[data-clock=digital] .clock{font-size:min(calc(var(--face-width,90vw)*.30),calc(var(--clock-height,60vh)*.85))}
+[data-seconds=hidden] .clock{font-size:min(calc(var(--face-width,90vw)*.41),calc(var(--clock-height,60vh)*.85))}
+[data-clock=digital][data-seconds=hidden] .clock{font-size:min(calc(var(--face-width,90vw)*.34),calc(var(--clock-height,60vh)*.85))}
+[data-clock=analog] .analog-clock{width:min(calc(var(--face-width,90vw)*.92),var(--clock-height,60vh));height:auto}
+.nixie-clock{--tube-span:min(var(--face-width,90vw),calc(var(--clock-height,60vh)*3.1));--tube-width:.175}
+[data-seconds=hidden] .nixie-clock{--tube-width:.205}
+.tube{width:calc(var(--tube-span)*var(--tube-width));height:calc(var(--tube-span)*.30)}
+.tube-digit{font-size:calc(var(--tube-span)*.20)}
+.tube-colon{font-size:calc(var(--tube-span)*.07)}
+.tube-seconds .tube{width:calc(var(--tube-span)*.055);height:calc(var(--tube-span)*.13)}
+.tube-seconds .tube-digit{font-size:calc(var(--tube-span)*.075)}
+.screen-preferences{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:16px 0}
+#fullscreenButton{display:inline-flex;align-items:center;justify-content:center;gap:12px}
+#fullscreenHint{flex:1;min-width:min(250px,100%);margin:0}
+@media(max-height:550px) and (orientation:landscape){.idle{padding-top:70px;padding-bottom:85px}}

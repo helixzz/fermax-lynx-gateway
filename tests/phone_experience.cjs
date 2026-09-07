@@ -144,7 +144,7 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     for(const [width,height] of [[1024,768],[768,1024],[390,844],[844,390]]){
       await page.setViewportSize({width,height});
       for(const zoom of ['', '2']){
-        await page.evaluate(zoom=>document.body.style.zoom=zoom,zoom);
+        await page.evaluate(zoom=>document.body.style.zoom=zoom,zoom);await settledClock();
         for(const id of ['todayIncoming','todayOpenings','showControls']){
           await page.locator('#'+id).focus();
           assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'focused '+id+' '+width+' '+zoom);
