@@ -77,6 +77,17 @@ class PreferencesTests(unittest.TestCase):
         self.assertEqual(PhonePreferences(self.folder).audio(),original)
         self.assertEqual(len(list(self.settings.music.glob('*.wav'))),1)
 
+    def test_failed_reupload_preserves_pinned_existing_music(self):
+        first = self.settings.upload(music())
+        self.settings.update({'ringtone':'custom','ring_seconds':30})
+        self.settings.capture_call()
+        second = self.settings.upload(music(b'\x20\x00'))
+        with patch('fermax.phone_preferences.atomic_json',side_effect=OSError('disk failure')):
+            with self.assertRaises(OSError): self.settings.upload(music())
+        self.assertEqual(self.settings.snapshot()['music_revision'],second['music_revision'])
+        self.assertEqual(self.settings.audio(first['music_revision']),music())
+        self.assertEqual(len(list(self.settings.music.glob('*.wav'))),2)
+
     def test_call_age_survives_wall_clock_jumps_and_does_not_flood_stream(self):
         now=[100.]; wall=[1000.]
         state=State(self.folder,mono=lambda:now[0],wall=lambda:wall[0]);self.addCleanup(state.db.close)

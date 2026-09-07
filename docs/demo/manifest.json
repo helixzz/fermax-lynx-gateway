@@ -3,7 +3,7 @@
   "browser": "chromium",
   "source_sha256": {
     "fermax/state.py": "6df32cff755289f651fce4aa87a25b4a47622711540461dde90f065c09ca9833",
-    "fermax/phone_preferences.py": "6837cd6a66727ac5d74da506530d355a3b34f61c254f9a4e96ed22c1847f3772",
+    "fermax/phone_preferences.py": "f863382359842fada28a5653ea56fda2ceb91f41cb4b68f06e204099155787b9",
     "fermax/api.py": "ca3259a4bf25ba373f35663f54610d54ccba88e0b93ed27cb204135c4eaea841",
     "tests/phone_fixture.py": "8c9554b49ed0e3504a97f0b10ff4cd59e0849e3abfe9e2b3380f96256da93492",
     "tests/phone_experience.cjs": "8188229beee9eea6743147972d919e214899e669509b6ae75c71c9cbb1ca1567",
@@ -59,7 +59,7 @@
     },
     {
       "file": "clock-analog.webp",
-      "sha256": "a61e017eb417c20cd34a0bbecfec77ef13c5ea5b30ca967304c087de922a22eb"
+      "sha256": "42df2e444a5d5491919bb9df09e16bab628e1ba924971fb54ddeac3e385633c3"
     },
     {
       "file": "clock-nixie.webp",

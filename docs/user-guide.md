@@ -2,8 +2,8 @@
 
 [Home](../README.md) · [中文完整手册](user-guide.zh-CN.md) · [Every screen](demo-gallery.md)
 
-This guide follows the development branch. Clock themes, configurable music and the
-redesigned video page are newer than tagged v0.2.0. All previews use synthetic data;
+This guide covers version 0.3.0, including clock themes, configurable music and the
+redesigned video page. All previews use synthetic data;
 check the [changelog](../CHANGELOG.md) before choosing a release. UI labels are Chinese.
 
 ## Install and connect

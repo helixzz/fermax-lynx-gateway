@@ -88,6 +88,7 @@ class PhonePreferences:
         with self.lock:
             self.music.mkdir(mode=0o700,exist_ok=True)
             path = self.music/(revision+'.wav')
+            existed = path.exists()
             temp = path.with_suffix('.new')
             try:
                 with temp.open('wb') as stream:
@@ -99,7 +100,7 @@ class PhonePreferences:
                     self.value = updated
                     keep = {revision, self.pinned_revision}
             except BaseException:
-                if revision != self.value['music_revision']: path.unlink(missing_ok=True)
+                if not existed: path.unlink(missing_ok=True)
                 raise
             finally:
                 temp.unlink(missing_ok=True)

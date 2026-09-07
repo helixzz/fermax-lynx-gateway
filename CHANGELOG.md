@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-09-07
 
 - Four phone clock styles with hidden/ticking/sweeping seconds and device-local display preferences.
 - Larger touch typography and a full-viewport, uncropped 4:3 video layout with translucent controls.

@@ -1,6 +1,6 @@
 # 界面图集 · Interface gallery
 
-这些开发版预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；目前部署版本仍为 v0.2.0。Screenshots show the development version using synthetic data.
+这些 0.3.0 版本预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show version 0.3.0 using synthetic data.
 
 [中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)
 

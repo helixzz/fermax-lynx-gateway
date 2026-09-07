@@ -10,8 +10,8 @@ controls you need within reach. Runs on Linux, with an optional Raspberry Pi dis
 
 ![Incoming video fills a landscape tablet, with large translucent controls along the bottom. Original synthetic entrance illustration; no camera footage.](docs/demo/phone-incoming.webp)
 
-*Development preview: the clock choices, configurable music and redesigned screens
-shown here are newer than tagged v0.2.0. See [changelog](CHANGELOG.md) for release scope.
+*Version 0.3.0: clock choices, configurable music and redesigned screens.
+See [changelog](CHANGELOG.md) for release scope.
 All images use synthetic data and an original illustrated entrance.*
 
 ## Make it feel at home
