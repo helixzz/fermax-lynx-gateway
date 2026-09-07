@@ -14,7 +14,11 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   if(directory)fs.mkdirSync(directory,{recursive:true});
   try{
     const {port}=JSON.parse((await once(lines,'line'))[0]),origin=`http://127.0.0.1:${port}`;
-    async function scenario(command){const reply=once(lines,'line');fixture.stdin.write(JSON.stringify({command})+'\n');return JSON.parse((await reply)[0]);}
+    async function scenario(command){
+      let exited;const dead=new Promise((_,reject)=>{exited=()=>reject(Error('Synthetic fixture exited'));fixture.once('exit',exited)});
+      try{const reply=Promise.race([once(lines,'line'),dead]);fixture.stdin.write(JSON.stringify({command})+'\n');return JSON.parse((await reply)[0]);}
+      finally{fixture.removeListener('exit',exited);}
+    }
     const engine=process.env.BROWSER_ENGINE || 'chromium';
     browser=await browsers[engine].launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE || undefined});
     const context=await browser.newContext({viewport:{width:1024,height:768},hasTouch:true,timezoneId:'UTC',reducedMotion:'reduce'});
@@ -68,7 +72,25 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await admin.route('**/v1/frame.jpg',async route=>{const response=await route.fetch();frameReady();await frameGate;await route.fulfill({response});});
     await frameCaptured;await scenario('end');await admin.locator('#video').waitFor({state:'hidden'});
     const lateFrame=admin.waitForResponse('**/v1/frame.jpg');frameRelease();await lateFrame;await admin.waitForTimeout(80);assert.equal(await admin.locator('#video').isVisible(),false);await admin.unroute('**/v1/frame.jpg');
-    await admin.locator('#showSettings').click();await admin.locator('#ringtoneChoice').waitFor({state:'visible'});
+    await admin.locator('#showSettings').click();
+    await admin.waitForFunction(()=>document.querySelector('#gatewayAudioDevices li'));
+    await shot(admin,'admin-gateway-sound','#gatewayAudioSettings');
+    assert.equal(await admin.locator('#gatewayRingEnabled').inputValue(),'true');
+    assert.equal(await admin.locator('#gatewayOutput option').count(),4);
+    await admin.locator('#gatewayOutput').selectOption('a'.repeat(64));
+    await admin.locator('#saveGatewayAudio').click();await admin.waitForFunction(()=>document.querySelector('#gatewayAudioFeedback').textContent.includes('已保存'));
+    await admin.locator('#testGatewayAudio').click();await admin.waitForFunction(()=>document.querySelector('#gatewayActualOutput').textContent.includes('USB'));
+    await admin.locator('#stopGatewayAudioTest').click();
+    await scenario('audio_none');await admin.waitForFunction(()=>!document.querySelector('#gatewayAudioDevices li'));
+    assert.equal(await admin.locator('#gatewayOutput').inputValue(),'a'.repeat(64));
+    await shot(admin,'admin-gateway-no-device','#gatewayAudioSettings');
+    await scenario('audio_restore');await admin.waitForFunction(()=>document.querySelector('#gatewayAudioDevices li'));
+    await admin.locator('#gatewayOutput').selectOption('auto');await admin.locator('#saveGatewayAudio').click();
+    await admin.waitForFunction(()=>document.querySelector('#gatewayAudioFeedback').textContent.includes('已保存'));
+    if(directory)for(const command of ['lcd_settings','lcd_sound','lcd_outputs']){
+      await scenario(command);const file=command.replaceAll('_','-')+'.webp';captured.push({file,sha256:hash(fs.readFileSync(path.join(directory,file)))});
+    }
+    await admin.locator('[data-setting=phoneMusicSettings]').click();await admin.locator('#ringtoneChoice').waitFor({state:'visible'});
     await shot(admin,'admin-settings','#settings');await shot(admin,'admin-ringtone','#phoneMusicSettings');assert.equal(await admin.locator('[data-tone]').count(),16);for(const button of await admin.locator('[data-tone]').all()){await button.click();await admin.waitForFunction(()=>document.querySelector('#musicStatus').textContent.includes('正在试听'));await admin.locator('#stopRingtone').click();}await shot(admin,'admin-ringtone-library','#phoneMusicSettings');
     for(const [width,height] of [[768,1024],[390,844],[844,390]]){await admin.setViewportSize({width,height});await noOverlap();const original=await admin.locator('#phoneLink').textContent();await admin.locator('#phoneLink').evaluate(node=>node.textContent='进入客厅平板话机模式 · 长标签测试');await noOverlap();await admin.locator('#phoneLink').evaluate((node,text)=>node.textContent=text,original);}
     await admin.setViewportSize({width:1024,height:768});await admin.evaluate(()=>document.body.style.zoom='2');await noOverlap();await admin.evaluate(()=>document.body.style.zoom='');
@@ -140,7 +162,7 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     assert.equal(await admin.locator('#settings').isVisible(),false);
     assert.equal(await admin.locator('#showSettings').getAttribute('aria-expanded'),'false');
     assert.deepEqual(errors,[]);assert.ok(count>0);
-    if(directory){const sources={};for(const file of ['fermax/state.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
+    if(directory){const sources={};for(const file of ['fermax/gateway_audio.py','fermax/display.py','fermax/web/gateway-audio.js','fermax/state.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
     console.log(engine+' PASS: admin music upload/settings, four clocks, preferences, 4:3 full viewport, ring expiry, mute, portrait/mobile, stale video, offline and revoked demos');
   }finally{if(browser)await browser.close();fixture.stdin.end();const timer=setTimeout(()=>fixture.kill('SIGTERM'),3000);if(fixture.exitCode===null)await once(fixture,'exit');clearTimeout(timer);lines.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

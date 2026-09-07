@@ -2,7 +2,7 @@
 
 [Home](../README.md) · [中文完整手册](user-guide.zh-CN.md) · [Every screen](demo-gallery.md)
 
-This guide covers v0.4.0, including the 16-track library and revised administrator layout.
+This guide covers development after v0.4.0. Independent gateway sound is not yet released; the 16-track library and revised administrator layout are available in v0.4.0.
 All previews use synthetic data;
 check the [changelog](../CHANGELOG.md) before choosing a release. UI labels are Chinese.
 
@@ -14,7 +14,7 @@ identity, addresses and 24-byte protocol key. Download a source release and veri
 
 ```sh
 sudo apt update
-sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av
+sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av alsa-utils
 python3 -m fermax.admin init
 python3 -m fermax.admin password
 ```
@@ -155,3 +155,7 @@ changes appear on the next state refresh.
 See [music provenance, offline audition and downgrade notes](ringtones.md). Before
 rolling back to v0.3.0, save one of its original three IDs or existing custom music;
 that version cannot load the new IDs. Preserve current credentials/device grants.
+
+## Gateway speaker
+
+The development version rings independently of browser phones, defaults on, and supports automatic USB → analog → HDMI routing with separate gain and Web/LCD settings. Read the [gateway sound guide](gateway-audio.md#english-quick-guide) for testing, fallback, installation and first-upgrade behavior.

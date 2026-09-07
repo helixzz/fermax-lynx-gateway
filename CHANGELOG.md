@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Independent gateway ringing with persistent on/off, application volume and USB → analog → HDMI output selection; bounded failure fallback.
+- Shared Web/LCD gateway sound settings and explicit three-second hardware sound test.
+- Repeated incoming events preserve the original music pin and ringing deadline.
+- Requires alsa-utils and service-user audio access; enabled by default on first upgrade. Hardware acceptance remains open.
+
 ## 0.4.0 — 2026-09-07
 
 - Sixteen locally synthesized original ringtone scores with grouped selection, audition and source/license records.

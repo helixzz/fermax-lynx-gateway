@@ -83,10 +83,12 @@ def main():
     threading.Thread(target=lan_and_clock, daemon=True).start()
     for signum in (signal.SIGTERM, signal.SIGINT):
         signal.signal(signum, lambda *_: stop.set())
+    state.gateway_audio.start()
     state.event('网关服务已启动', 'service_start')
     logging.info('Live gateway started')
     while not stop.wait(0.2):
         state.tick()
+    state.gateway_audio.close()
     if display:
         display.stopping.set()
     controller.stop.set()

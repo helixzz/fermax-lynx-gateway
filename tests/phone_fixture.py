@@ -2,6 +2,7 @@
 import copy
 import datetime
 import io
+import os
 import json
 import sys
 import tempfile
@@ -89,6 +90,22 @@ def main():
                     if hold_open: held_requests.append(request_id)
                     else: state.event('Synthetic confirmation','open_manual', {'request_id':request_id})
 
+        class SilentPlayer:
+            # Synthetic backend: never opens a PCM, speaker, or subprocess.
+            def start(self, *args): pass
+            def poll(self): return None
+            def stop(self): pass
+
+        audio_devices = [
+            {'id':'a'*64,'name':'示例 USB 扬声器','kind':'usb','pcm':'synthetic-usb'},
+            {'id':'b'*64,'name':'示例 3.5mm 输出','kind':'analog','pcm':'synthetic-analog'},
+            {'id':'c'*64,'name':'示例 HDMI 显示器','kind':'hdmi','pcm':'synthetic-hdmi'}]
+        def start_audio(target):
+            target.gateway_audio.discover=lambda:list(audio_devices)
+            target.gateway_audio.player=SilentPlayer()
+            target.gateway_audio.start()
+
+        start_audio(state)
         state.controller = FakeController()
         auth = Auth(folder)
         service = server(state,auth,('127.0.0.1',0))
@@ -112,6 +129,17 @@ def main():
                     state.deadline = state.mono()-1
                     state.tick()
                 elif command == 'hold_open': hold_open = True
+                elif command == 'audio_none': audio_devices.clear()
+                elif command == 'audio_restore':
+                    audio_devices.extend([
+                        {'id':'a'*64,'name':'示例 USB 扬声器','kind':'usb','pcm':'synthetic-usb'},
+                        {'id':'b'*64,'name':'示例 3.5mm 输出','kind':'analog','pcm':'synthetic-analog'}])
+                elif command.startswith('lcd_') and demo and os.environ.get('DEMO_DIR'):
+                    from fermax.display import Display
+                    display=Display(state,folder,framebuffer='/dev/null',font_path=os.environ.get('DEMO_FONT'))
+                    display.coeff=[[1,0,0],[0,1,0]]
+                    display.page={'lcd_settings':'settings','lcd_sound':'sound','lcd_outputs':'outputs'}[command]
+                    display.render().save(str(Path(os.environ['DEMO_DIR'])/(command.replace('_','-')+'.webp')),'WEBP',quality=88)
                 elif command == 'other_result':
                     state.event('Synthetic other client', 'open_denied', {'request_id':'other-client-request'})
                 elif command == 'complete_open':
@@ -123,8 +151,9 @@ def main():
                 elif command == 'restart':
                     port = service.server_address[1]
                     service.shutdown(); service.server_close()
-                    state.db.close()
+                    state.gateway_audio.close(); state.db.close()
                     state = State(folder,config=config,wall=(lambda:fixed_time) if demo else __import__('time').time)
+                    start_audio(state)
                     state.network = 'ready'
                     state.clock_status['synchronized'] = True
                     state.controller = FakeController()
@@ -133,7 +162,7 @@ def main():
                     threading.Thread(target=service.serve_forever,daemon=True).start()
                 print(json.dumps({'actions':actions}),flush=True)
         finally:
-            service.shutdown(); service.server_close(); state.db.close()
+            state.gateway_audio.close(); service.shutdown(); service.server_close(); state.db.close()
 
 
 if __name__ == '__main__':

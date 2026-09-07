@@ -68,6 +68,7 @@ class Controller:
                 self.state.event(('门铃呼入：' if kind == 'incoming' else '正在查看：')+self.names[value], kind)
             elif kind in ('early_video','audio','ending'):
                 self.state.call = kind
+                if kind == 'ending': self.state.gateway_audio.end()
                 if kind == 'audio':
                     self.state.event('已接听', 'answered')
                 elif kind == 'early_video':

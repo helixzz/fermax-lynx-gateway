@@ -2,7 +2,7 @@ const settingsPanel=document.querySelector('#settings');
 const musicSection=document.createElement('section');
 musicSection.id='phoneMusicSettings';
 musicSection.innerHTML=`<div class="sectionHead"><div><span class="eyebrow">PHONE EXPERIENCE</span><h3>让门铃，也有家的声音。</h3></div><span class="badge">管理员设置</span></div>
-<p class="muted">统一设置所有话机的来访铃声。新设置用于下一次来访；不会改变自动开门策略。</p>
+<p class="muted">统一设置网关与所有话机的来访铃声。新设置用于下一次来访；不会改变自动开门策略。</p>
 <form id="phoneMusicForm"><div class="settingsGrid"><label>铃声音乐<select id="ringtoneChoice"><option value="custom">自定义音乐</option></select></label><label>循环响铃时长<select id="ringDuration"><option value="15">15 秒</option><option value="30" selected>30 秒（默认）</option><option value="45">45 秒</option><option value="60">60 秒</option></select></label></div>
 <div class="controls"><button id="previewRingtone" type="button">试听所选</button><button id="stopRingtone" type="button" class="quiet">停止试听</button><button class="primary">保存铃声设置</button></div><p id="savedMusic" class="muted"></p><div id="ringtoneLibrary" class="ringtoneLibrary" aria-label="预置铃声"></div></form>
 <div class="music-upload"><label>上传喜欢的音乐<input id="ringtoneFile" type="file" accept="audio/*,.mp3,.wav,.m4a"></label><p class="muted">MP3、WAV 或 M4A；最长 60 秒、最大 10 MB。能否读取取决于管理浏览器。只保留最近上传的一首，请使用有权使用的音乐。</p><button id="uploadRingtone" type="button">上传并选择</button><p id="musicStatus" role="status" class="muted">尚未上传自定义音乐</p></div>`;
@@ -59,10 +59,10 @@ document.querySelector('#revokeDeviceForm').addEventListener('submit',async even
   try{await api('/v1/devices/revoke',{id:document.querySelector('#revokeDeviceId').value,password:password.value});await refreshDevices()}
   catch(e){error(e)}finally{password.value=''}
 });
-const settingIds=['phoneMusicSettings','phoneDevicesSettings','configForm','passwordForm'];
+const settingIds=['gatewayAudioSettings','phoneMusicSettings','phoneDevicesSettings','configForm','passwordForm'];
 function selectSettings(id){stopMusic();for(const pane of settingIds)document.getElementById(pane).hidden=pane!==id;document.querySelectorAll('[data-setting]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.setting===id)));}
 document.querySelectorAll('[data-setting]').forEach(button=>button.addEventListener('click',()=>selectSettings(button.dataset.setting)));
-selectSettings('phoneMusicSettings');
+selectSettings('gatewayAudioSettings');
 function closeSettings(){stopMusic();settingsPanel.hidden=true;document.querySelector('#overview').hidden=false;document.querySelector('.journal').hidden=false;document.querySelector('#showSettings').setAttribute('aria-expanded','false');document.querySelector('#showSettings').focus();}
 document.querySelector('#backOverview').addEventListener('click',closeSettings);
 document.querySelector('#showSettings').addEventListener('click',async()=>{
