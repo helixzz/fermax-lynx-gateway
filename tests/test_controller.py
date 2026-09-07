@@ -1,5 +1,6 @@
 """Exercise the live orchestrator without creating sockets or sending commands."""
 import collections
+import queue
 import tempfile
 import time
 import unittest
@@ -91,3 +92,18 @@ class ControllerTests(unittest.TestCase):
         self.assertIsNone(c.control_peer)
         for peer in peers:
             peer.disconnect_now.assert_called_once()
+
+    def test_phone_queued_control_cannot_move_to_next_call(self):
+        c = self.c
+        c.actions = queue.Queue()
+        c.actions.put(('open',None,'request','previous-call',True))
+        c.link_checked = time.monotonic()
+        c.sockets, c.hosts = [], []
+        c.sip.tick = Mock()
+        c.announcer = Mock()
+        c.service_operations = Mock()
+        c.open = Mock()
+        self.state.call_id = 'new-call'
+        c.iteration()
+        c.open.assert_not_called()
+        self.assertEqual(self.state.logs(limit=1)[0]['kind'],'control_failed')

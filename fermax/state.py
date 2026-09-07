@@ -42,6 +42,10 @@ class State:
         self.policy = {'enabled': False, 'minutes': None, 'expires_at': None}
         self.deadline = None
         self.call, self.panel, self.relays = 'idle', None, []
+        self.call_id, self.panel_id, self.direction = None, None, None
+        self.stream_epoch = uuid.uuid4().hex
+        self.stream_version, self.stream_signature = 0, None
+        self.stream_slots = threading.BoundedSemaphore(12)
         self.allow_open = False
         self.controller = None
         self.video_jpeg, self.video_updated = None, 0
@@ -66,6 +70,10 @@ class State:
 
     def event(self, text, kind='info', detail=None):
         with self.lock:
+            detail = dict(detail or {})
+            if self.call_id:
+                detail.setdefault('call_id', self.call_id)
+                detail.setdefault('panel_id', self.panel_id)
             self.notice = text
             self.db.execute('INSERT INTO events(time,kind,text,detail) VALUES(?,?,?,?)',
                             (self.wall(), kind, text, json.dumps(detail or {}, ensure_ascii=False)))
@@ -99,7 +107,7 @@ class State:
             label = '关闭' if minutes is None else ('无时限' if minutes == 0 else f'{minutes} 分钟')
             self.event('自动开门：'+label, 'auto_changed', policy)
 
-    def control(self, action, panel=None, request_id=None):
+    def control(self, action, panel=None, request_id=None, *, expected_call=None, phone=False):
         if action not in ('preview', 'answer', 'open', 'hangup'):
             raise ValueError('Unknown action')
         if panel is not None and panel not in [p['id'] for p in self.config['panels']]:
@@ -108,12 +116,14 @@ class State:
         if not isinstance(request_id, str) or not 1 <= len(request_id) <= 80:
             raise ValueError('Invalid request ID')
         with self.lock:
-            signature = json.dumps([action, panel])
+            signature = json.dumps([action, panel, expected_call]) if phone else json.dumps([action, panel])
             old = self.db.execute('SELECT action FROM requests WHERE id=?', (request_id,)).fetchone()
             if old:
                 if old['action'] != signature:
                     raise ValueError('Request ID reused for another action')
                 return {'request_id':request_id, 'duplicate':True}
+            if phone and action != 'preview' and (not expected_call or expected_call != self.call_id):
+                raise ValueError('会话已变化，请等待最新状态')
             if self.controller is None or self.network != 'ready':
                 raise ValueError('门禁网络未就绪')
             if action == 'answer':
@@ -125,7 +135,10 @@ class State:
             self.db.execute('INSERT INTO requests VALUES(?,?,?)', (request_id, signature, self.wall()))
             self.db.commit()
             try:
-                self.controller.enqueue(action, panel, request_id)
+                if phone:
+                    self.controller.enqueue(action, panel, request_id, expected_call, True)
+                else:
+                    self.controller.enqueue(action, panel, request_id)
             except Exception:
                 self.db.execute('DELETE FROM requests WHERE id=?', (request_id,))
                 self.db.commit()
@@ -143,10 +156,47 @@ class State:
         with self.lock:
             self.tick()
             return {'mode':'live', 'network':self.network, 'call':self.call, 'panel':self.panel,
+                    'call_id':self.call_id, 'panel_id':self.panel_id, 'direction':self.direction,
                     'identity':{k:self.config[k] for k in ('building','block','unit','extension')},
                     'panels':[{'id':p['id'],'name':p['name']} for p in self.config['panels']],
                     'auto':dict(self.policy), 'allow_open':self.allow_open, 'relays':list(self.relays),
                     'notice':self.notice, 'events':self.logs(limit=6),
                     'time':self.wall(), 'local_time':datetime.fromtimestamp(self.wall()).isoformat(),
+                    'utc_offset':datetime.fromtimestamp(self.wall()).astimezone().utcoffset().total_seconds(),
                     'clock':dict(self.clock_status), 'video_ready':self.video_jpeg is not None and self.mono()-self.video_updated < 5,
                     'audio_available':False}
+
+    def phone_snapshot(self, panels):
+        """Small, scoped projection. Never expose configuration or raw event detail."""
+        with self.lock:
+            full = self.snapshot()
+            permitted = self.panel_id is None or self.panel_id in panels
+            result = {k:full[k] for k in ('network', 'call', 'call_id', 'panel', 'panel_id',
+                      'direction', 'auto', 'time', 'local_time', 'utc_offset', 'audio_available')}
+            result['clock_synchronized'] = full['clock']['synchronized']
+            result['panels'] = [p for p in full['panels'] if p['id'] in panels]
+            result['video_ready'] = permitted and full['video_ready']
+            result['allow_open'] = permitted and full['allow_open'] and bool(full['relays'])
+            result['events'] = [
+                {k:e[k] for k in ('id','time','kind')} | {'call_id':e['detail'].get('call_id')}
+                for e in self.logs(limit=30)
+                if e['kind'] in ('incoming','outgoing','call_ended','open_manual','open_auto',
+                                 'open_unknown','open_denied','control_failed')
+                and e['detail'].get('panel_id') in panels
+            ][:3]
+            if not permitted:
+                result.update(call='busy', call_id=None, panel=None, panel_id=None, direction=None)
+            return result
+
+    def stream_snapshot(self, panels):
+        with self.lock:
+            snapshot = self.phone_snapshot(panels)
+            # Version describes global state, not a particular device's projection.
+            full = self.snapshot()
+            signature = json.dumps({k:v for k,v in full.items() if k not in ('time','local_time')}, sort_keys=True)
+            if signature != self.stream_signature:
+                self.stream_signature = signature
+                self.stream_version += 1
+            return {'schema':1, 'epoch':self.stream_epoch, 'version':self.stream_version,
+                    'event_id':f'{self.stream_epoch}:{self.stream_version}',
+                    'server_time':self.wall(), 'state':snapshot}

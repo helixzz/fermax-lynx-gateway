@@ -5,6 +5,7 @@ import queue
 import socket
 import threading
 import time
+import uuid
 from pathlib import Path
 
 from .media import Video
@@ -32,9 +33,9 @@ class Controller:
         self.control_peer = self.keep_peer = None
         self.link_checked = 0
 
-    def enqueue(self, action, panel, request_id):
+    def enqueue(self, action, panel, request_id, expected_call=None, phone=False):
         try:
-            self.actions.put_nowait((action, panel, request_id))
+            self.actions.put_nowait((action, panel, request_id, expected_call, phone))
         except queue.Full:
             raise ValueError('操作队列已满')
 
@@ -60,6 +61,9 @@ class Controller:
         with self.state.lock:
             if kind in ('incoming','outgoing'):
                 self.begin(value)
+                self.state.call_id = uuid.uuid4().hex
+                self.state.panel_id = next(k for k,v in self.panels.items() if v == value)
+                self.state.direction = kind
                 self.state.call = 'ringing'
                 self.state.event(('门铃呼入：' if kind == 'incoming' else '正在查看：')+self.names[value], kind)
             elif kind in ('early_video','audio','ending'):
@@ -71,6 +75,7 @@ class Controller:
             elif kind == 'ended':
                 self.state.event('通话结束', 'call_ended', value)
                 self.state.call, self.state.panel = 'idle', None
+                self.state.call_id = self.state.panel_id = self.state.direction = None
                 self.state.allow_open, self.state.relays = False, []
                 self.operations.clear()
                 self.pending_op = self.keep_pending = None
@@ -117,12 +122,13 @@ class Controller:
         self.pending_op = None
         while True:
             try:
-                action, panel, request_id = self.actions.get_nowait()
+                action, panel, request_id, _, _ = self.actions.get_nowait()
             except queue.Empty:
                 break
             self.state.event('网络断开，操作已取消', 'control_failed', {'action':action,'request_id':request_id})
         with self.state.lock:
             self.state.call, self.state.panel = 'idle', None
+            self.state.call_id = self.state.panel_id = self.state.direction = None
             self.state.allow_open, self.state.relays = False, []
             self.state.network = 'disconnected'
         self.video.reset()
@@ -234,11 +240,13 @@ class Controller:
                 if push:
                     self.state.event('门口机通知：'+push.get('pushType',''), 'panel_notification', push)
         try:
-            action, panel, request_id = self.actions.get_nowait()
+            action, panel, request_id, expected_call, phone = self.actions.get_nowait()
         except queue.Empty:
             pass
         else:
             try:
+                if phone and action != 'preview' and expected_call != self.state.call_id:
+                    raise ValueError('会话已变化，操作已取消')
                 if action == 'preview':
                     self.sip.preview(self.panels[panel or next(iter(self.panels))])
                 elif action == 'answer':
@@ -250,7 +258,10 @@ class Controller:
                         raise ValueError('正在等待开门应答，请稍后挂断')
                     self.sip.hangup()
             except ValueError as error:
-                self.state.event(str(error), 'control_failed', {'request_id':request_id})
+                detail = {'request_id':request_id}
+                if phone and action != 'preview':
+                    detail['call_id'] = expected_call
+                self.state.event(str(error), 'control_failed', detail)
         self.sip.tick()
         self.announcer.tick()
         self.service_operations()
