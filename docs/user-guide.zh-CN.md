@@ -172,3 +172,13 @@ python3 -m fermax.admin --state-dir /var/lib/fermax password
 ![安静待机](demo/phone-quiet-auto.webp)
 ![声音提示](demo/phone-quiet-sound.webp)
 ![连接中断](demo/phone-quiet-offline.webp)
+
+## iPad 大时钟与全屏
+
+四种待机时钟按可用宽高放大，隐藏秒数时主时钟会进一步扩展。打开操作面板，轻触“进入全屏”；全屏后可用同一按钮或浏览器手势退出。页面不会在加载、来访或用户退出后自动强制全屏。
+
+Safari 的支持随系统版本而异：iPadOS 16.4 起提供标准 Fullscreen API，旧版尝试 WebKit 接口，以实际能力检测为准。请求仍需用户点击，浏览器可能拒绝；拒绝时会保留普通页面并显示操作提示。
+
+常驻 iPad / iPhone 推荐：Safari 分享 → 添加到主屏幕 → 从新图标打开。页面声明 Apple 独立窗口模式，可减少地址栏和工具栏占用。主屏幕窗口可能不共享原 Safari 的设备会话，必要时在该窗口重新登录管理员并授权话机。独立窗口不等于防锁屏，仍需调整系统自动锁定；后台响铃不保证。
+
+参考：[WebKit Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/)、[Apple 独立窗口说明](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html)。

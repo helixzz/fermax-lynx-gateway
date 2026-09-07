@@ -158,3 +158,15 @@ The standby bell and door icons show daily incoming visits and confirmed opening
 ### Quiet standby regression
 
 Standby shows clock/date/counts with contextual corner indicators; all four detailed statuses are inside the accessible controls dialog. The envelope/authentication/control API is unchanged. Run `PYTHON=python3 node tests/phone_quiet.cjs` (Chromium or WebKit) for contextual alerts, zero volume, persistent playback refusal, scoped panel focus, Escape/Tab/backdrop dismissal and absence of unintended control requests. The main experience script generates 43 synthetic previews including disconnected standby and sound attention.
+
+## Larger clocks and fullscreen on iPad
+
+All four clocks expand within the available standby width and height; hiding seconds leaves more space for the main time. Open the controls panel and tap **Enter fullscreen** (进入全屏). Use the same button or browser gesture to exit. Loading, incoming calls and leaving fullscreen never automatically request fullscreen.
+
+The page detects the standard API and the older WebKit-prefixed API. iPadOS 16.4 added the standard API; actual availability varies with browser and system version. Requests must originate from a user gesture and may be refused. Unsupported or refused requests show a Home Screen alternative without changing settings.
+
+For iPad/iPhone: Safari **Share → Add to Home Screen**, then launch the new icon. Apple standalone metadata enables an app-like window without the usual Safari toolbars. A Home Screen window may require separate administrator login and phone enrollment. Standalone mode is distinct from Fullscreen API and does not prevent auto-lock or guarantee background ringing.
+
+Sources: [Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/), [Fullscreen user activation](https://fullscreen.spec.whatwg.org/), [Apple standalone configuration](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html).
+
+`PYTHON=python3 node tests/phone_screen.cjs` checks synthetic standard/legacy capability, rejected requests, missing APIs, external exit, standalone state, user gestures and tablet/phone clock bounds. Browser API mocks validate handling, not physical iPad support.

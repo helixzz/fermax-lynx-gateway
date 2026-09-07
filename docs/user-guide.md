@@ -177,3 +177,13 @@ Use Escape to close and Tab to navigate. An active panel focus prevents timed di
 ![Quiet standby](demo/phone-quiet-auto.webp)
 ![Sound attention](demo/phone-quiet-sound.webp)
 ![Disconnected](demo/phone-quiet-offline.webp)
+
+## Larger clocks and fullscreen on iPad
+
+All four clocks expand within the available standby width and height; hiding seconds leaves more space for the main time. Open the controls panel and tap **Enter fullscreen** (进入全屏). Use the same button or browser gesture to exit. Loading, incoming calls and leaving fullscreen never automatically request fullscreen.
+
+The page detects the standard API and the older WebKit-prefixed API. iPadOS 16.4 added the standard API; actual availability varies with browser and system version. Requests must originate from a user gesture and may be refused. Unsupported or refused requests show a Home Screen alternative without changing settings.
+
+For iPad/iPhone: Safari **Share → Add to Home Screen**, then launch the new icon. Apple standalone metadata enables an app-like window without the usual Safari toolbars. A Home Screen window may require separate administrator login and phone enrollment. Standalone mode is distinct from Fullscreen API and does not prevent auto-lock or guarantee background ringing.
+
+Sources: [Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/), [Fullscreen user activation](https://fullscreen.spec.whatwg.org/), [Apple standalone configuration](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html).
