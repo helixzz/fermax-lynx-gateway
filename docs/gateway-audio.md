@@ -1,6 +1,6 @@
 # 网关独立响铃 · Gateway sound
 
-开发版功能（v0.4.0 之后，尚未发布）。网关可以独立发出来访铃声，
+v0.5.0 起提供。网关可以独立发出来访铃声，
 即使没有登记话机、话机离线或浏览器全部关闭。它不提供双向通话。
 
 ## 设置入口
@@ -61,7 +61,7 @@ Linux 安装 `alsa-utils`，运行服务的用户需有播放设备访问权限�
 
 ## English quick guide
 
-Development after v0.4.0; not yet released. The gateway rings independently of all
+Available in v0.5.0. The gateway rings independently of all
 browser phones, defaults on, and has its own 50% gain and output preference. Open
 administrator settings → 网关声音, or LCD settings → 声音与扬声器. Both edit the same
 persistent configuration. Web changes require Save; LCD buttons save immediately.

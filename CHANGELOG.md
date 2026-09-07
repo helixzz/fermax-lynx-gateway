@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-09-07
 
 - Independent gateway ringing with persistent on/off, application volume and USB → analog → HDMI output selection; bounded failure fallback.
 - Shared Web/LCD gateway sound settings and explicit three-second hardware sound test.

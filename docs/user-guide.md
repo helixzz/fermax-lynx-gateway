@@ -2,7 +2,7 @@
 
 [Home](../README.md) · [中文完整手册](user-guide.zh-CN.md) · [Every screen](demo-gallery.md)
 
-This guide covers development after v0.4.0. Independent gateway sound is not yet released; the 16-track library and revised administrator layout are available in v0.4.0.
+This guide covers v0.5.0, including independent gateway sound, the 16-track library and revised administrator layout.
 All previews use synthetic data;
 check the [changelog](../CHANGELOG.md) before choosing a release. UI labels are Chinese.
 
@@ -158,4 +158,4 @@ that version cannot load the new IDs. Preserve current credentials/device grants
 
 ## Gateway speaker
 
-The development version rings independently of browser phones, defaults on, and supports automatic USB → analog → HDMI routing with separate gain and Web/LCD settings. Read the [gateway sound guide](gateway-audio.md#english-quick-guide) for testing, fallback, installation and first-upgrade behavior.
+Version 0.5.0 rings independently of browser phones, defaults on, and supports automatic USB → analog → HDMI routing with separate gain and Web/LCD settings. Read the [gateway sound guide](gateway-audio.md#english-quick-guide) for testing, fallback, installation and first-upgrade behavior.

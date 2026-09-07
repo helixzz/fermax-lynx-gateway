@@ -1,6 +1,6 @@
 # Gateway ringing: reviewed design
 
-Issue [#10](https://github.com/helixzz/fermax-lynx-gateway/issues/10). Development after v0.4.0; not yet released.
+Issue [#10](https://github.com/helixzz/fermax-lynx-gateway/issues/10). Available in v0.5.0.
 
 The gateway is an independent bell, even with zero enrolled phones. It defaults on,
 with 50% application gain and automatic routing. An explicit off setting persists.

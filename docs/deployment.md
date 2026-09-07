@@ -52,6 +52,6 @@ The public implementation does not migrate plaintext credentials automatically. 
 
 Phone music settings live in `phone-preferences.json` and `phone-music/` under the private state directory. Include both in backups alongside device grants and existing gateway state.
 
-## Gateway sound (development after v0.4.0)
+## Gateway sound (v0.5.0)
 
 Install `alsa-utils`; allow the service user access to sound devices (the example unit includes `SupplementaryGroups=audio`). Preserve custom service options when upgrading. Include `gateway-audio.json` in full-state backups. First-upgrade ringing defaults on, but explicit off persists. No desktop login or global default-device change is required. See [sound setup and hardware acceptance](gateway-audio.md).
