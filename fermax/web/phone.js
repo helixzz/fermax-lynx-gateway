@@ -11,6 +11,7 @@
   let mutedCall = null, currentCall = null, pending = null, wakeLock = null;
   let ringPlan = null, ringStartedFor = null, sweepFrame = null, lastSweep = 0, messageTimer;
   let soundFailed = false;
+  let wakePending=false, wakeGeneration=0, wakeBlocked=false, wakeWanted=true, pageLeaving=false;
   const ringNames = Object.assign({custom:'自定义音乐'},Object.fromEntries(window.LynxRingtones.map(track=>[track.id,track.name])));
   const eventNames = {incoming:'收到来访', outgoing:'查看门口机', call_ended:'来访结束',
     open_manual:'门口机确认开门', open_auto:'自动开门已确认', open_unknown:'开门结果未知',
@@ -185,10 +186,10 @@
       if (outcome) { message(eventNames[outcome.kind]); pending = null; }
     }
     if (state.call === 'busy') message('另一个未授权门口机的会话正在进行，请稍候。');
-    buttons(); updateClock(); ring();
+    buttons(); updateClock(); ring(); keepAwake();
   }
   async function setup(text) {
-    stopped = true; ++generation; if (stream) stream.abort();
+    stopped = true; releaseWake('话机已退出，保持亮屏已释放。'); ++generation; if (stream) stream.abort();
     clearTimeout(retryTimer); clearTimeout(renewTimer); offline('需要重新授权');
     hideControls(false); $('#phone').hidden = true; $('#setup').hidden = false; document.body.classList.remove('phone-ready'); message(text);
     $('#enrollForm').hidden = true;
@@ -309,13 +310,47 @@
       sound.play({ringtone:'chime'},ringRemaining(),volume).catch(() => { if (!online || !state || state.call_id !== call || mutedCall === call || ringRemaining() <= 0) return; soundFailed=true; attention(); message('铃声无法播放，请轻触启用并检查设备音量。'); });
     });
   }
-  async function keepAwake() {
-    if (!navigator.wakeLock || !window.isSecureContext) return;
-    try { if (wakeLock && !wakeLock.released) return; wakeLock = await navigator.wakeLock.request('screen');
-      $('#wakeHint').textContent = '已请求保持亮屏。切入后台或锁屏仍可能中断话机。';
-      wakeLock.addEventListener('release', () => { $('#wakeHint').textContent = '保持亮屏已释放，请检查系统自动锁定设置。'; });
-    } catch (_) { $('#wakeHint').textContent = '无法保持亮屏，请在系统设置中调整自动锁定。'; }
+  function wakeEligible(){return wakeWanted && !pageLeaving && !stopped && state && !$('#phone').hidden && !document.hidden;}
+  function wakeStatus(text){
+    if($('#wakeHint').textContent!==text)$('#wakeHint').textContent=text;
+    const supported=window.isSecureContext && navigator.wakeLock && typeof navigator.wakeLock.request==='function';
+    const button=$('#wakeButton');button.hidden=!supported;
+    const label=!wakeWanted?'启用保持亮屏':wakeLock || wakePending?'停止保持亮屏':'重试保持亮屏';
+    if(button.textContent!==label)button.textContent=label;
+    button.setAttribute('aria-pressed',String(!!wakeLock && !wakeLock.released));
   }
+  function releaseWake(text){
+    ++wakeGeneration;wakeBlocked=false;
+    const old=wakeLock;wakeLock=null;
+    if(old)Promise.resolve(old.release()).catch(()=>{});
+    wakeStatus(text);
+  }
+  async function keepAwake() {
+    if(!wakeEligible())return;
+    if(!window.isSecureContext){wakeStatus('当前为非安全连接，网页不能阻止自动锁屏。请使用受信任的 HTTPS；或在 iPad 设置 → 显示与亮度 → 自动锁定中选择“永不”（如可选）。');return;}
+    if(!navigator.wakeLock || typeof navigator.wakeLock.request!=='function'){wakeStatus('此浏览器不支持保持亮屏。请更新系统，或在系统设置中将自动锁定设为“永不”（如可选）。');return;}
+    if(wakeLock && !wakeLock.released || wakePending || wakeBlocked)return;
+    wakePending=true;const token=wakeGeneration;wakeStatus('正在请求保持亮屏…');
+    try{
+      const lock=await navigator.wakeLock.request('screen');
+      if(token!==wakeGeneration || !wakeEligible()){await lock.release();return;}
+      wakeLock=lock;
+      const released=()=>{if(wakeLock!==lock)return;wakeLock=null;wakeBlocked=true;wakeStatus('系统已释放保持亮屏，可轻触重试。请检查低电量模式和自动锁定设置；后台或锁屏不保证响铃。');};
+      lock.addEventListener('release',released);
+      if(lock.released)released();
+      else wakeStatus('已保持亮屏 · 仅当前话机在前台时有效。切入后台或手动锁屏仍会中断。');
+    }catch(_){if(token===wakeGeneration && wakeEligible()){wakeBlocked=true;wakeStatus('保持亮屏请求被拒绝，可轻触重试。请检查系统低电量模式和自动锁定设置。');}}
+    finally{
+      wakePending=false;
+      // A hidden-page request may resolve after returning; release it before replacing it.
+      if(token!==wakeGeneration && wakeEligible())keepAwake();
+      else wakeStatus($('#wakeHint').textContent);
+    }
+  }
+  $('#wakeButton').addEventListener('click',()=>{
+    if(wakeWanted && (wakeLock || wakePending)){wakeWanted=false;releaseWake('已停止保持亮屏，将遵循系统自动锁定设置。');}
+    else{wakeWanted=true;wakeBlocked=false;keepAwake();}
+  });
   const standaloneQuery=matchMedia('(display-mode: standalone)');
   const homeScreenHint='iPad / iPhone：在 Safari 的分享菜单选择“添加到主屏幕”，再从图标打开。独立窗口可能需要重新授权话机。';
   function fullscreenElement(){return document.fullscreenElement || document.webkitFullscreenElement;}
@@ -360,7 +395,7 @@
       await sound.enable(); soundFailed=false; attention();
       if (state && state.direction === 'incoming' && ringRemaining() > 0 && mutedCall !== state.call_id) { ringStartedFor = null; ring(); }
       else await sound.play(state && state.phone_preferences || {ringtone:'chime'},3,Number($('#volume').value)/100,'preview');
-      message('正在试听，请确认设备音量。',true); await keepAwake();
+      message('正在试听，请确认设备音量。',true);
     } catch (_) { soundFailed=true; attention(); status('#soundStatus','bell','♪ 铃声被阻止',soundFailed || !sound.enabled || !!mutedCall || !Number($('#volume').value)); message('浏览器未允许铃声或音乐不可用，请再次轻触启用并检查静音设置。'); }
   });
   $('#clockStyle').addEventListener('change',event => { clock.value.style = event.target.value; clock.save(); updateClock(); });
@@ -403,14 +438,14 @@
     try { await request('/v1/phone/session/logout', {}); await setup('此话机授权已撤销。'); }
     catch (error) { message('未能撤销设备，请恢复连接后重试：'+error.message); }
   });
-  function resume() { if (!document.hidden && !stopped) { offline('正在恢复连接'); reconnect(); if (sound.enabled) keepAwake(); } }
+  function resume() { if (!document.hidden && !stopped) { offline('正在恢复连接'); reconnect(); wakeBlocked=false; keepAwake(); } }
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { ++generation; if (stream) stream.abort(); clearTimeout(retryTimer); clearTimeout(renewTimer); offline('页面已暂停'); }
+    if (document.hidden) { releaseWake('页面已暂停，返回前台后重新申请保持亮屏。'); ++generation; if (stream) stream.abort(); clearTimeout(retryTimer); clearTimeout(renewTimer); offline('页面已暂停'); }
     else resume();
   });
-  window.addEventListener('pageshow', resume); window.addEventListener('online', resume);
+  window.addEventListener('pageshow', () => {pageLeaving=false;resume();}); window.addEventListener('online', resume);
   window.addEventListener('offline', () => { ++generation; if (stream) stream.abort(); offline('网络已断开'); });
-  window.addEventListener('pagehide', () => { ++generation; if (stream) stream.abort(); clearTimeout(retryTimer); clearTimeout(renewTimer); sound.stop(); clearPicture(); });
+  window.addEventListener('pagehide', () => { pageLeaving=true;releaseWake('页面已离开，保持亮屏已释放。'); ++generation; if (stream) stream.abort(); clearTimeout(retryTimer); clearTimeout(renewTimer); sound.stop(); clearPicture(); });
   setInterval(() => {
     updateClock(); ring();
     if (online && performance.now()-lastMessage > 45000) { offline('心跳已超时'); reconnect(); }

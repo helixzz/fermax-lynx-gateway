@@ -52,7 +52,7 @@
         <div class="display-preferences"><label>时钟样式<select id="clockStyle"><option value="editorial">雅致 · 数字时钟</option><option value="digital">清晰 · 电子时钟</option><option value="analog">经典 · 模拟表盘</option><option value="nixie">暖光 · 电子管</option></select></label><label>秒针 / 秒数<select id="secondsMode"><option value="hidden">隐藏 · 安静显示</option><option value="step">显示 · 每秒跳动</option><option value="sweep">显示 · 表盘平滑扫秒</option></select></label></div>
         <p class="preference-note">待机图标：门铃数字是今日来电，门扇数字是今日已确认开门（含手动与自动，仅协议确认）。仅统计此话机获授权的入口，按网关本地日期换日。轻触图标可查看提示。</p><p class="preference-note">显示偏好只用于这台设备。铃声音乐与时长由管理员统一设置。</p>
         <div class="preferences"><button id="enableSound">启用并试听铃声</button><label>铃声音量<input id="volume" type="range" min="0" max="100" value="35"></label><button id="logout">退出并撤销此话机</button></div>
-        <p id="ringSetting" class="preference-note"></p><p id="wakeHint">前台常驻使用。请在系统设置中调整自动锁定；后台与锁屏不会保证响铃。</p>
+        <p id="ringSetting" class="preference-note"></p><div class="screen-preferences"><button id="wakeButton" aria-describedby="wakeHint" hidden>启用保持亮屏</button><p id="wakeHint" role="status">进入话机后检查保持亮屏支持。后台与锁屏不会保证响铃。</p></div>
         <details class="recent"><summary>最近活动</summary><ol id="recent"></ol></details>
       </section>
 
