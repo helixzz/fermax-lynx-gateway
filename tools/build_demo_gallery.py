@@ -6,6 +6,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPTIONS = {
+    'phone-quiet-sound': ('铃声提醒 · Sound attention', '待机只在需要处理时显示声音图标，轻触进入声音设置。'),
+    'phone-quiet-auto': ('安静待机 · Quiet standby', '中央时钟与一行辅助信息，自动开门启用时留角落提示。'),
+    'phone-quiet-offline': ('连接异常 · Connection notice', '断线显示文字提示，统计不可用，旧自动状态不冒充实时。'),
     'admin-statistics': ('今日活动 · Daily activity', '来电与协议确认开门，按网关本地日期汇总。'),
     'phone-statistics': ('待机统计 · Quiet activity', '图标与数字，轻触或聚焦显示统计口径。'),
     'lcd-home': ('实体首页统计 · LCD daily activity', '保持大按钮，简明显示今日来电与确认开门。'),
@@ -61,8 +64,8 @@ def main():
     for item in images.values():
         if hashlib.sha256((folder/item['file']).read_bytes()).hexdigest() != item['sha256']:
             raise SystemExit('Image hash mismatch: '+item['file'])
-    intro = ('这些 v0.6.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
-             'Screenshots show version 0.6.0 using synthetic data.')
+    intro = ('这些 v0.6.1 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
+             'Screenshots show version 0.6.1 using synthetic data.')
     markdown = ['# 界面图集 · Interface gallery', intro,
                 '[中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)',
                 '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。']

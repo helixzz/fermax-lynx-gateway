@@ -165,3 +165,15 @@ Version 0.5.0 rings independently of browser phones, defaults on, and supports a
 The Web overview and local LCD show daily incoming visits and confirmed openings. Idle phones use icons and counts scoped to their authorized entrances; touch an icon for its meaning. Offline counts show —. Openings are protocol confirmations, not physical door-state measurements.
 
 [统计口径与预览 · Counting rules and previews](daily-statistics.md)
+
+## Quiet standby
+
+Standby keeps the clock, grouped date/daily counts and a bottom-right controls entry. Touch empty space to open the panel. Device name, administrator link and full connection/policy/sound status are inside the panel; all four clock styles and existing preferences remain available.
+
+An enabled automatic-opening policy retains a corner cycle icon. A crossed bell appears when sound is unenabled, at zero volume or blocked; touching it opens sound settings without changing volume or playing audio. Healthy connections stay quiet; disconnection gets an explicit notice and unavailable counts.
+
+Use Escape to close and Tab to navigate. An active panel focus prevents timed dismissal; closing restores focus to the corner entry. Standby surfaces and indicators never actuate the door.
+
+![Quiet standby](demo/phone-quiet-auto.webp)
+![Sound attention](demo/phone-quiet-sound.webp)
+![Disconnected](demo/phone-quiet-offline.webp)

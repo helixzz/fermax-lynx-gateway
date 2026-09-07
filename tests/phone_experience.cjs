@@ -118,18 +118,22 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     const page=await context.newPage();await page.goto(origin+'/phone');await page.locator('#enrollForm').waitFor({state:'visible'});
     await shot(page,'phone-enrollment','#setup');await page.locator('#adminPassword').fill('synthetic-phone-password');await page.locator('#enrollButton').click();
     await page.locator('#phone').waitFor({state:'visible'});await page.waitForFunction(()=>document.querySelector('#gatewayStatus').textContent.includes('已连接'));
+    await page.locator('#hideControls').click();await page.locator('#soundIndicator').waitFor({state:'visible'});await shot(page,'phone-quiet-sound');await page.locator('#soundIndicator').click();
     await page.locator('#enableSound').click();await page.locator('#hideControls').click();await page.waitForFunction(()=>!document.querySelector('#message').textContent);
+    await scenario('auto');await page.locator('#autoIndicator').waitFor({state:'visible'});await shot(page,'phone-quiet-auto');
+    await context.setOffline(true);await page.locator('#connectionNotice').waitFor({state:'visible'});await shot(page,'phone-quiet-offline');await context.setOffline(false);await page.locator('#connectionNotice').waitFor({state:'hidden'});await scenario('auto_off');
+    async function settledClock(){await page.waitForFunction(()=>{const face=document.querySelector('#clockFace');return face.style.getPropertyValue('--face-width')===face.clientWidth+'px'});}
     for(const style of ['editorial','digital','analog','nixie']){
       await page.locator('#wakeSurface').click();await page.locator('#clockStyle').selectOption(style);await page.locator('#secondsMode').selectOption(style==='analog'?'sweep':'step');await page.locator('#hideControls').click();
       assert.equal(await page.evaluate(()=>document.body.dataset.clock),style);
       if(style==='analog'){await page.emulateMedia({reducedMotion:'no-preference'});const previous=await page.locator('#secondHand').evaluate(node=>node.style.transform);await page.waitForFunction(previous=>document.querySelector('#secondHand').style.transform!==previous,previous);await page.emulateMedia({reducedMotion:'reduce'});}
       await shot(page,'clock-'+style);
-      await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.setViewportSize({width:1024,height:768});
+      await page.setViewportSize({width:390,height:844});await settledClock();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.setViewportSize({width:1024,height:768});await settledClock();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     }
     await page.locator('#wakeSurface').click();await page.locator('#secondsMode').selectOption('hidden');await page.locator('#hideControls').click();await shot(page,'clock-nixie-quiet');
     await page.reload();await page.locator('#phone').waitFor({state:'visible'});assert.equal(await page.locator('#clockStyle').inputValue(),'nixie');assert.equal(await page.locator('#secondsMode').inputValue(),'hidden');
-    await page.locator('#enableSound').click();await page.locator('#clockStyle').selectOption('editorial');await shot(page,'phone-preferences','#controls');
+    await page.locator('#showControls').click();await page.locator('#enableSound').click();await page.locator('#clockStyle').selectOption('editorial');await shot(page,'phone-preferences','#controls');
     assert.equal(await page.locator('#todayIncoming').textContent(),'8');
     assert.equal(await page.locator('#todayOpenings').textContent(),'4');
     await page.locator('#hideControls').click();await page.locator('#todayOpenings').focus();
@@ -141,7 +145,7 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       await page.setViewportSize({width,height});
       for(const zoom of ['', '2']){
         await page.evaluate(zoom=>document.body.style.zoom=zoom,zoom);
-        for(const id of ['todayIncoming','todayOpenings','gatewayStatus','networkStatus','autoStatus','soundStatus']){
+        for(const id of ['todayIncoming','todayOpenings','showControls']){
           await page.locator('#'+id).focus();
           assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'focused '+id+' '+width+' '+zoom);
         }

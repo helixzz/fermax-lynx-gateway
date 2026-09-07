@@ -154,3 +154,7 @@ The gallery also captures gateway sound and LCD pages. For reproduction, install
 ### Daily activity and icon controls
 
 The standby bell and door icons show daily incoming visits and confirmed openings for the phone's authorized entrances. A disconnected phone shows dashes. Focus/touch a count for its label; the controls panel retains a text explanation. Common status and mute/collapse controls use labelled SVG icons; open/end retain text. [Counting rules, persistence and previews](daily-statistics.md). Browser experience regression includes five/six-digit counts, four viewports, 200% zoom and focused tooltips.
+
+### Quiet standby regression
+
+Standby shows clock/date/counts with contextual corner indicators; all four detailed statuses are inside the accessible controls dialog. The envelope/authentication/control API is unchanged. Run `PYTHON=python3 node tests/phone_quiet.cjs` (Chromium or WebKit) for contextual alerts, zero volume, persistent playback refusal, scoped panel focus, Escape/Tab/backdrop dismissal and absence of unintended control requests. The main experience script generates 43 synthetic previews including disconnected standby and sound attention.

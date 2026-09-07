@@ -112,3 +112,9 @@ or endorsed by their owners.
 管理员 Web 与实体屏幕显示今日来电和已确认开门；话机待机用图标与数字安静呈现。统计跨重启保留，按网关本地日期换日，每台话机仅显示授权入口。开门计数表示协议确认，不是物理门状态。[了解统计与图标](docs/daily-statistics.md)。
 
 ![今日活动](docs/demo/admin-statistics.webp)
+
+### 更安静的话机
+
+时钟、日期与今日活动集中呈现，连接详情收进操作面板；自动开门、铃声异常与断线保留明确提示。轻触空白或右下角图标即可操作。[查看界面与手册](docs/user-guide.zh-CN.md#安静待机)。
+
+![安静待机](docs/demo/phone-quiet-auto.webp)
