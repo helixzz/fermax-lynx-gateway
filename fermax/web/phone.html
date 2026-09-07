@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111916">
+  <title>LYNX · 话机</title>
+  <link rel="stylesheet" href="/phone.css">
+  <script defer src="/phone.js"></script>
+</head>
+<body>
+  <header class="masthead"><span class="wordmark">LYNX<span class="wordmark-dot">●</span></span><span id="deviceName">家的另一端</span><a href="/">管理登录 ↗</a></header>
+  <main>
+    <section id="setup" class="setup" hidden>
+      <p class="eyebrow">YOUR HOME, WITHIN REACH</p><h1>留一盏灯，<br>等一声门铃。</h1>
+      <p>把这台设备设为常驻话机。可查看来访、预览和开门；双向语音尚未启用。</p>
+      <form id="enrollForm">
+        <label>设备名称<input id="deviceLabel" value="客厅话机" maxlength="60" required autocomplete="off"></label>
+        <fieldset><legend>允许使用的门口机</legend><div id="enrollPanels"></div></fieldset>
+        <label>再次验证管理员密码<input id="adminPassword" type="password" autocomplete="current-password" required></label>
+        <button class="primary" id="enrollButton">授权并进入话机</button>
+      </form>
+      <p id="setupHint">授权后退出本页的管理员会话。设备可在管理页撤销，修改密码也会使授权失效。</p>
+    </section>
+    <section id="phone" hidden>
+      <div id="idle" class="idle">
+        <p class="eyebrow">HOME IS HERE</p><h1 class="clock" id="time">--:--</h1><p id="date">正在获取网关时间</p>
+        <button id="wakeSurface" class="wake-surface" aria-label="显示话机操作面板"><span>轻触，唤出操作 <span aria-hidden="true">↑</span></span></button>
+      </div>
+      <section id="call" class="call" hidden aria-label="当前来访">
+        <div class="call-head"><div><p id="callKind" class="eyebrow">来访视频</p><h1 id="panelName">门口机</h1></div><span id="callTime"></span></div>
+        <div class="picture"><img id="picture" alt="门口机实时画面" hidden><p id="pictureHint" role="status">等待视频画面</p><span class="video-label">LIVE · 来访画面</span></div>
+        <div class="call-controls"><button id="open" class="primary" disabled>开门</button><button id="hangup" disabled>结束来访</button><button id="mute" disabled>本次铃声静音</button></div>
+        <p class="audio-note">双向语音尚未启用 · 视频建立不代表已接听</p>
+      </section>
+      <section id="controls" class="controls" hidden aria-label="话机操作">
+        <div class="controls-head"><h2>在家，随时看一眼。</h2><button id="hideControls" aria-label="收起操作面板">收起 ↓</button></div>
+        <div id="panels" class="panel-buttons"></div>
+        <div class="preferences"><button id="enableSound">启用话机并测试铃声</button><label>铃声音量<input id="volume" type="range" min="0" max="100" value="35"></label><button id="logout">退出并撤销此话机</button></div>
+        <p id="wakeHint">前台常驻使用。请在系统设置中调整自动锁定；后台与锁屏不会保证响铃。</p>
+        <div class="recent"><h3>最近活动</h3><ol id="recent"></ol></div>
+      </section>
+      <footer class="statusbar"><span id="gatewayStatus">◌ 网关连接中</span><span id="networkStatus">○ 门禁待连接</span><span id="autoStatus">○ 自动开门待同步</span><span id="soundStatus">♪ 铃声未启用</span></footer>
+    </section>
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>

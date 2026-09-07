@@ -2,13 +2,15 @@
 
 These are proposed milestones and engineering estimates, not calendar commitments or background jobs. No webhook or MCP code ships in the initial release.
 
+Maintainer priority update (2026-09-07): start [tablet phone #3](https://github.com/helixzz/fermax-lynx-gateway/issues/3), in the order state/reconnection, revocable device authorization, then foreground UI and device validation. See [implementation and remaining validation](phone.md). Recording follows the basic phone milestone; full voice remains separate. Webhook and MCP remain queued proposals. The integration estimates below retain their relative ordering, not the current global execution order.
+
 | Order | Proposal | Estimated focused engineering effort | Dependencies |
 |---|---|---|---|
 | 1 | Reliable HTTP/HTTPS event webhooks | 3–5 person-days | Stable event IDs, persistent delivery queue and site tests |
 | 2 | Local MCP adapter: read-only first, optional controls | 3–5 person-days | Stable JSON API, scoped adapter policy and client compatibility tests |
 | 3 | Remote MCP over Streamable HTTP | Additional 2–4 person-days | HTTPS deployment, authentication design and selected client support |
 
-Allow additional calendar time for unattended soak tests, site access and maintainer review. Client-specific integration differences may change estimates. Webhooks are the first priority because they support notifications and general home automation with fewer dependencies; a local MCP adapter can follow without waiting for public HTTPS.
+Allow additional calendar time for unattended soak tests, site access and maintainer review. Client-specific integration differences may change estimates. Within the integration milestones, webhooks precede MCP because they support notifications and general home automation with fewer dependencies; a local MCP adapter can follow without waiting for public HTTPS.
 
 ## Webhook proposal
 

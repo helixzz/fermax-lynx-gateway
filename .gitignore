@@ -9,6 +9,7 @@ dist/
 !.env.example
 config.json
 auth.json
+phone-devices.json
 api-token
 edk
 policy.json

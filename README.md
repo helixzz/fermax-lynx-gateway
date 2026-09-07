@@ -11,6 +11,7 @@ A self-hosted Linux gateway for a compatible FERMAX VIVO / LYNX installation. It
 - Persistent automatic-open timers, including unlimited duration; automatic opening applies only to incoming calls and attempts once per call.
 - Single-user web password changes, salted PBKDF2 hashes, revocable sessions, separate API tokens and command-line password recovery.
 - Complete SQLite application-event journal, filtering, pagination and CSV export. This is not a recording or packet-capture archive.
+- Foreground [tablet phone mode](docs/phone.md) with a clock, incoming video, scoped/revocable device grants, renewable sessions and reconnecting status. Real tablet endurance testing remains outstanding.
 - DHCP NTP selection with a public fallback when no NTP server is supplied; optional small SPI display with clock and recent events.
 
 ## What you need
@@ -59,7 +60,8 @@ The new token is written to `api-token`; it is not printed. The HTTP service is 
 
 ## API and roadmap
 
-Proposals: [Webhook #1](https://github.com/helixzz/fermax-lynx-gateway/issues/1) and [MCP #2](https://github.com/helixzz/fermax-lynx-gateway/issues/2).
+Current milestone: [tablet phone #3](https://github.com/helixzz/fermax-lynx-gateway/issues/3).
+Proposals: [Webhook #1](https://github.com/helixzz/fermax-lynx-gateway/issues/1), [MCP #2](https://github.com/helixzz/fermax-lynx-gateway/issues/2), and [recording #4](https://github.com/helixzz/fermax-lynx-gateway/issues/4).
 
 See [API](docs/api.md), [protocol scope](docs/protocol.md) and [roadmap](docs/roadmap.md). Webhook and MCP plans are proposals only; the gateway does not send event data to external services.
 
@@ -82,3 +84,5 @@ A compatible site has confirmed automatic opening followed by its existing eleva
 ## License
 
 MIT for this repository's original implementation. Third-party packages retain their own licenses. FERMAX, VIVO and LYNX names identify compatibility targets; this project is not affiliated with or endorsed by their owners.
+
+Versioning and release history: [release policy](docs/releases.md) · [changelog](CHANGELOG.md).

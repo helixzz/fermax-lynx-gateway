@@ -1,5 +1,7 @@
 # API
 
+For the separate scoped tablet credentials, renewable sessions and state stream, see [phone API](phone.md). Ordinary administrator sessions below retain their existing expiration.
+
 The service listens on loopback and the configured home IPv4 address. Default port: 8765. `GET /health` and static UI files are public; all other GET endpoints require authentication. Health means process availability; check `network` in state for building connectivity.
 
 Use `Authorization: Bearer <api-token>` for integrations. The web client exchanges its password for a random HttpOnly/SameSite=Strict session cookie, valid for up to 24 hours. Password changes and command-line resets revoke all web sessions. Sessions also end when the service restarts. API tokens are separate and revoked through `fermax.admin api-token`.
