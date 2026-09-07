@@ -64,3 +64,11 @@ LYNX Gateway 把兼容门禁的来访视频和日常操作，带到一块可以�
 See incoming visits and confirmed openings at a glance: clear counts for administrators, quiet icons beside the phone clock. Each phone only sees its authorized entrances.
 
 [统计口径与预览 · Counting rules and previews](daily-statistics.md)
+
+## Less on screen, more room for the clock · 安静待机
+
+中央时钟与一组日期/统计信息，替代多层标题和状态栏。正常连接保持安静；自动开门启用、铃声需要处理或断线时，界面明确提示。轻触空白展开完整操作面板。
+
+The clock takes center stage. Date and activity sit together; connection details live in the controls panel, while important policy and sound conditions remain discoverable.
+
+![Quiet standby](demo/phone-quiet-auto.webp)

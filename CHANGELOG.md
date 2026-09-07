@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 — 2026-09-07
+
+- Simplify phone standby to a central clock, grouped date/counts and a corner settings entry; remove the idle masthead, slogan and permanent status strip.
+- Keep automatic-opening and sound-attention indicators discoverable; show clear disconnected status and persistent playback-failure hints.
+- Improve touch and keyboard panel focus, dismissal and inactivity behavior; preserve controls, API and stored settings.
+
 ## 0.6.0 — 2026-09-07
 
 - Daily incoming-visit and confirmed-opening counts in Web administration, local LCD and scoped phone standby, with persistent deduplication and local-day rollover.
