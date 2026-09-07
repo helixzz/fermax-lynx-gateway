@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-09-07
 
 - Daily incoming-visit and confirmed-opening counts in Web administration, local LCD and scoped phone standby, with persistent deduplication and local-day rollover.
 - Labelled line icons for phone status and common controls; updated synthetic previews and bilingual counting guide.
