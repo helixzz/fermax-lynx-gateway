@@ -148,3 +148,5 @@ records source and image SHA-256 hashes. Screenshots are static demos and do not
 establish physical-device or production readiness.
 
 See [ringtone catalog and source notes](ringtones.md) for the offline library and code downgrade considerations.
+
+The gallery also captures gateway sound and LCD pages. For reproduction, install `fonts-wqy-microhei` or set `DEMO_FONT` to its `wqy-microhei.ttc` file. LCD images use the actual 480×320 renderer with synthetic state and no framebuffer device. Gateway sound is tested through a silent fake backend; see [gateway sound](gateway-audio.md).

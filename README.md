@@ -10,7 +10,7 @@ controls you need within reach. Runs on Linux, with an optional Raspberry Pi dis
 
 ![Incoming video fills a landscape tablet, with large translucent controls along the bottom. Original synthetic entrance illustration; no camera footage.](docs/demo/phone-incoming.webp)
 
-*Version 0.4.0 includes the 16-track library and revised administrator layout.
+*Version 0.5.0 adds [independent gateway sound](docs/gateway-audio.md) with Web/LCD settings, alongside the 16-track library and revised administrator layout.
 See [changelog](CHANGELOG.md) for release scope.
 All images use synthetic data and an original illustrated entrance.*
 
@@ -77,7 +77,7 @@ verify its checksum and extract it. From that directory on Debian / Raspberry Pi
 
 ```sh
 sudo apt update
-sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av
+sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av alsa-utils
 python3 -m fermax.admin init
 python3 -m fermax.admin password
 # Set your site values in ~/.local/state/fermax/config.json and install your own edk.

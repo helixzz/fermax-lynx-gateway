@@ -2,7 +2,7 @@
 
 [项目首页](../README.md) · [English](user-guide.md) · [全部界面预览](demo-gallery.md) · [项目简介](product.md)
 
-本手册对应 v0.4.0，包含 16 首铃声与管理页新布局；安装某个版本前请核对[更新记录](../CHANGELOG.md)。图中名称、时间、地址和门口画面均为合成示例。
+本手册对应 v0.5.0，包含网关独立响铃、16 首铃声与管理页布局；安装某个版本前请核对[更新记录](../CHANGELOG.md)。图中名称、时间、地址和门口画面均为合成示例。
 
 ## 1. 安装前准备
 
@@ -12,7 +12,7 @@
 
 ```sh
 sudo apt update
-sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av
+sudo apt install python3-pil python3-protobuf python3-pycryptodome python3-enet python3-av alsa-utils
 python3 -m fermax.admin init
 python3 -m fermax.admin password
 ```
@@ -150,3 +150,7 @@ python3 -m fermax.admin --state-dir /var/lib/fermax password
 本项目是非官方实验性互通实现。旧 iPadOS 15、实际声音及长时间常驻仍需现场验收；语音、录制、Webhook、MCP 和 HTTPS 尚未实现。[全部界面图集](demo-gallery.md)包含登录、设备配置、密码设置、异常状态等完整预览。
 
 若要回滚到 v0.3.0，应先将铃声保存为清脆门铃、海港旋律、木琴轻响或已有自定义音乐；旧版不识别新增曲目 ID。不要为此恢复旧密码或设备授权文件。
+
+## 网关扬声器
+
+无需话机也可响铃；默认开启，支持 USB → 模拟 → HDMI 自动输出、独立音量与 Web/实体屏幕设置。详见[网关独立响铃手册](gateway-audio.md)，包含短时测试、故障降级和首次升级默认开启的说明。

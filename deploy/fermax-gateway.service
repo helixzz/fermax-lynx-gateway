@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 User=fermax
 Group=fermax
+SupplementaryGroups=audio
 WorkingDirectory=/opt/fermax-lynx-gateway
 Environment=PYTHONUNBUFFERED=1
 ExecStart=/usr/bin/python3 -m fermax.main --state-dir /var/lib/fermax

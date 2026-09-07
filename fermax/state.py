@@ -33,6 +33,9 @@ class State:
         self.config = validate(config or EXAMPLE)
         from .phone_preferences import PhonePreferences
         self.phone_preferences = PhonePreferences(self.folder)
+        from .gateway_audio import GatewayAudio
+        self.gateway_audio = GatewayAudio(self.folder,self.phone_preferences,mono=mono)
+        self.ring_call_id = None
         self.call_started_mono = None
         self.call_ring_preferences = None
         self.path = self.folder/'policy.json'
@@ -74,13 +77,19 @@ class State:
 
     def event(self, text, kind='info', detail=None):
         with self.lock:
-            if kind in ('incoming','outgoing') and self.call_id:
+            if kind in ('incoming','outgoing') and self.call_id and self.ring_call_id != self.call_id:
+                self.ring_call_id = self.call_id
                 self.call_started_mono = self.mono()
                 self.call_ring_preferences = self.phone_preferences.capture_call()
+                if kind == 'incoming':
+                    self.gateway_audio.call(self.call_id,self.call_ring_preferences,self.call_started_mono)
             elif kind == 'call_ended':
+                self.gateway_audio.end()
+                self.ring_call_id = None
                 self.call_started_mono = None
                 self.call_ring_preferences = None
                 self.phone_preferences.end_call()
+            if kind == 'answered': self.gateway_audio.end()
             detail = dict(detail or {})
             if self.call_id:
                 detail.setdefault('call_id', self.call_id)

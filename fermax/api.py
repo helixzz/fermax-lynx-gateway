@@ -159,7 +159,7 @@ def server(state, auth, address=('127.0.0.1', 8765)):
             path = urlsplit(self.path).path
             static = {'/':'index.html','/app.js':'app.js','/style.css':'style.css','/settings.js':'settings.js',
                       '/phone':'phone.html','/phone.js':'phone.js','/phone.css':'phone.css',
-                      '/clock.js':'clock.js','/ringtone.js':'ringtone.js'}
+                      '/gateway-audio.js':'gateway-audio.js','/clock.js':'clock.js','/ringtone.js':'ringtone.js'}
             if path == '/ringtones.js':
                 return self.send(200,b'window.LynxRingtones = '+(WEB/'ringtones.json').read_bytes()+b';', 'text/javascript; charset=utf-8')
             if path in static:
@@ -173,6 +173,8 @@ def server(state, auth, address=('127.0.0.1', 8765)):
             if not self.authorized():
                 return
             try:
+                if path == '/v1/gateway-audio':
+                    return self.send(200,state.gateway_audio.snapshot())
                 if path == '/v1/phone-preferences':
                     return self.send(200,state.phone_preferences.snapshot())
                 if path == '/v1/ringtone':
@@ -301,6 +303,14 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                     auth.change(data.get('current_password'), data.get('new_password'))
                     state.event('Web password changed; sessions revoked', 'password_changed')
                     return self.send(200, {'ok':True}, extra={'Set-Cookie':'fermax=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'})
+                if self.path == '/v1/gateway-audio':
+                    return self.send(200,state.gateway_audio.update(data))
+                if self.path == '/v1/gateway-audio/test':
+                    if type(data.get('stop')) is not bool: raise ValueError('需要 stop 开关')
+                    with state.lock:
+                        if not data['stop'] and state.call != 'idle': raise ValueError('来访期间不能测试声音')
+                        result=state.gateway_audio.test(data['stop'])
+                    return self.send(200,result)
                 if self.path == '/v1/phone-preferences':
                     result = state.phone_preferences.update(data)
                     state.event('话机铃声设置已更新', 'phone_preferences_changed')

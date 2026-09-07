@@ -44,13 +44,14 @@ def transform(coeff, point):
 
 
 class Display:
-    def __init__(self, state, folder, framebuffer=None):
+    def __init__(self, state, folder, framebuffer=None, font_path=None):
         from PIL import Image, ImageDraw, ImageFont
         self.Image, self.Draw = Image, ImageDraw
         self.state = state
         self.fb = framebuffer or find_framebuffer()
-        self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 19)
-        self.big = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 27)
+        font_path = font_path or '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
+        self.font = ImageFont.truetype(font_path, 19)
+        self.big = ImageFont.truetype(font_path, 27)
         self.path = Path(folder)/'touch.json'
         self.guard = threading.Lock()
         self.coeff = None
@@ -66,6 +67,7 @@ class Display:
         self.touch_available = False
         self.selection = 0
         self.page = 'home'
+        self.audio_offset = 0
         self.network = ''
         self.stopping = threading.Event()
 
@@ -89,7 +91,7 @@ class Display:
             if not (0 <= x < 480 and 0 <= y < 320):
                 return
             try:
-                if self.page == 'settings':
+                if self.page == 'policy':
                     if 100 <= y < 155:
                         if x < 240:
                             self.selection = (self.selection+1) % len(DURATIONS)
@@ -103,6 +105,40 @@ class Display:
                             self.path.unlink(missing_ok=True)
                     elif y >= 260:
                         self.page = 'home'
+                elif self.page == 'settings':
+                    if 100 <= y < 155: self.page = 'sound' if x < 240 else 'policy'
+                    elif 170 <= y < 225:
+                        if x < 240:
+                            self.samples, self.coeff = [], None
+                            self.path.unlink(missing_ok=True)
+                        else: self.page = 'home'
+                elif self.page == 'sound':
+                    audio = self.state.gateway_audio
+                    value = audio.snapshot()['settings']
+                    if 100 <= y < 145:
+                        value['enabled'] = not value['enabled']; audio.update(value)
+                    elif 150 <= y < 195:
+                        if x < 160 or x >= 320:
+                            value['volume'] = max(0,min(100,value['volume']+(-5 if x<160 else 5))); audio.update(value)
+                    elif 200 <= y < 245: self.page = 'outputs'; self.audio_offset = 0
+                    elif y >= 260:
+                        if x < 160:
+                            with self.state.lock:
+                                if self.state.call != 'idle': raise ValueError('来访期间不能测试声音')
+                                audio.test()
+                        elif x < 320: audio.test(stop=True)
+                        else: self.page = 'settings'
+                elif self.page == 'outputs':
+                    audio = self.state.gateway_audio
+                    devices = [{'id':'auto'}]+audio.snapshot()['devices']
+                    if 100 <= y < 250:
+                        index = self.audio_offset+(y-100)//50
+                        if index < len(devices):
+                            value=audio.snapshot()['settings']; value['output']=devices[index]['id']; audio.update(value); self.page='sound'
+                    elif y>=260:
+                        if x<160: self.audio_offset=max(0,self.audio_offset-3)
+                        elif x<320 and self.audio_offset+3<len(devices): self.audio_offset+=3
+                        elif x>=320: self.page='sound'
                 elif 185 <= y < 240:
                     if x < 160:
                         self.state.control('preview', snap['panels'][0]['id'])
@@ -118,7 +154,7 @@ class Display:
                         self.state.control('hangup')
                     else:
                         self.page = 'settings'
-            except ValueError as error:
+            except (ValueError,OSError) as error:
                 self.state.event(str(error), 'control_rejected')
 
     def touches(self):
@@ -193,13 +229,41 @@ class Display:
                 def button(box, label, color='#243952'):
                     d.rounded_rectangle(box, radius=7, fill=color)
                     text(box[0]+10, box[1]+10, label)
-                if self.page == 'settings':
+                if self.page == 'policy':
                     minutes = DURATIONS[self.selection]
                     button((8,100,235,155), '时长：'+('无时限' if minutes==0 else f'{minutes} 分钟')+' ›')
                     button((245,100,472,155), '启用自动开门')
                     button((8,170,235,225), '关闭自动开门')
                     button((245,170,472,225), '重新校准触摸')
                     button((8,264,472,314), '返回')
+                elif self.page == 'settings':
+                    button((8,100,235,155), '声音与扬声器')
+                    button((245,100,472,155), '自动开门设置')
+                    button((8,170,235,225), '重新校准触摸')
+                    button((245,170,472,225), '返回首页')
+                elif self.page == 'sound':
+                    audio=self.state.gateway_audio.snapshot(); value=audio['settings']
+                    button((8,100,472,145), '网关呼入响铃：'+('开启 · 点击关闭' if value['enabled'] else '关闭 · 点击开启'))
+                    button((8,150,155,195), '音量 −')
+                    text(204,160,str(value['volume'])+'%')
+                    button((322,150,472,195), '音量 +')
+                    selected=next((d['name'] for d in audio['devices'] if d['id']==value['output']), '自动 USB → 模拟 → HDMI' if value['output']=='auto' else '首选设备失联 · 自动降级')
+                    button((8,200,472,245), '输出：'+selected[:19]+' ›')
+                    button((8,264,155,314), '测试 3 秒')
+                    button((165,264,312,314), '停止测试')
+                    button((322,264,472,314), '返回')
+                    d.rectangle((0,38,479,96),fill='#101b2b')
+                    text(12,42,(audio['actual']['name'] if audio['actual'] else '当前未播放')[:24], '#58dccc')
+                    text(12,70,audio['status'][:24], '#8fa4bc')
+                elif self.page == 'outputs':
+                    audio=self.state.gateway_audio.snapshot()
+                    devices=[{'id':'auto','name':'自动 · USB → 模拟 → HDMI'}]+audio['devices']
+                    for offset,device in enumerate(devices[self.audio_offset:self.audio_offset+3]):
+                        name=('✓ ' if device['id']==audio['settings']['output'] else '')+device['name']
+                        button((8,100+50*offset,472,145+50*offset),name[:25])
+                    button((8,264,155,314), '上一页')
+                    button((165,264,312,314), '下一页')
+                    button((322,264,472,314), '返回')
                 else:
                     for index, event in enumerate(s['events'][:3]):
                         stamp = datetime.fromtimestamp(event['time']).strftime('%H:%M')

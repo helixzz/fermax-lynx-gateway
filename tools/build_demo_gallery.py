@@ -6,6 +6,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPTIONS = {
+    'admin-gateway-sound': ('网关独立响铃 · Gateway sound', '独立开关、音量、输出选择与明确的测试声音。'),
+    'admin-gateway-no-device': ('首选设备失联 · Missing output', '保留首选偏好，显示设备状态并自动降级。'),
+    'lcd-settings': ('实体屏幕设置 · LCD settings', '声音与自动开门分别进入，保留大触控按钮。'),
+    'lcd-sound': ('实体屏幕声音 · LCD sound', '本机开关、音量、实际输出及三秒试音。'),
+    'lcd-outputs': ('实体输出选择 · LCD outputs', '大按钮分页选择自动或具体设备。'),
     'clock-editorial': ('书页时钟 · Editorial', '舒展的衬线数字与低对比度状态。'),
     'clock-digital': ('数字时钟 · Digital', '醒目的数字，适合远距离查看。'),
     'clock-analog': ('模拟时钟 · Analog', '刻度与指针；秒针可隐藏、跳动或平滑移动。'),
@@ -53,8 +58,8 @@ def main():
     for item in images.values():
         if hashlib.sha256((folder/item['file']).read_bytes()).hexdigest() != item['sha256']:
             raise SystemExit('Image hash mismatch: '+item['file'])
-    intro = ('这些 v0.4.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
-             'Screenshots show version 0.4.0 using synthetic data.')
+    intro = ('这些 v0.5.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
+             'Screenshots show version 0.5.0 using synthetic data.')
     markdown = ['# 界面图集 · Interface gallery', intro,
                 '[中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)',
                 '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。']
