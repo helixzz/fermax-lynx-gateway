@@ -23,6 +23,11 @@ journalctl -u fermax-gateway -n 40
 
 The sample unit is headless. It preserves `/var/lib/fermax` across updates. Back up the full state directory, including SQLite WAL files while the service is stopped; never publish the backup. Deploy source atomically or stop the service while replacing code. Do not restart during an active call.
 
+From v0.7.0, include `integrations.json` and preserve the SQLite database containing
+stable gateway/journal identities. HA grants are independent of phone/admin tokens;
+password resets revoke them. A pre-0.7 rollback cannot serve the HA API. See
+[Home Assistant setup and migration](home-assistant.md) before pairing.
+
 ## DHCP time service
 
 The NTP helper reads `/etc/fermax-gateway/config.json` for `home_interface`; when absent, it defaults to wlan0. Use a symlink to the active state configuration so interface settings stay aligned:

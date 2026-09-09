@@ -10,7 +10,7 @@ controls you need within reach. Runs on Linux, with an optional Raspberry Pi dis
 
 ![Incoming video fills a landscape tablet, with large translucent controls along the bottom. Original synthetic entrance illustration; no camera footage.](docs/demo/phone-incoming.webp)
 
-*Version 0.5.0 adds [independent gateway sound](docs/gateway-audio.md) with Web/LCD settings, alongside the 16-track library and revised administrator layout.
+*Version 0.7.0 adds [direct Home Assistant integration](docs/home-assistant.md), alongside independent gateway sound, the 16-track library and tablet clocks.
 See [changelog](CHANGELOG.md) for release scope.
 All images use synthetic data and an original illustrated entrance.*
 
@@ -51,6 +51,24 @@ most of a tablet's screen; portrait keeps the image uncropped.
 ![Automatic opening is enabled; only the Stop action is offered](docs/demo/admin-auto-unlimited.webp)
 
 [Read the illustrated guide →](docs/user-guide.md) · [查看中文操作步骤 →](docs/user-guide.zh-CN.md)
+
+## Welcome Home Assistant
+
+Let a doorbell event start a household notification, show the current visitor image,
+or check today's visits from your HA dashboard. The gateway connects directly over
+your local network: **no MQTT broker, cloud account or extra HA OS service**.
+
+Choose which entrances HA can see. Start with read-only state and events; enable
+camera or explicit controls only if needed. The gateway keeps ringing and following
+its existing automatic-opening policy when HA is offline.
+
+![Administrator integration settings with explicit entrance and permission selection](docs/demo/admin-integration-pairing.webp)
+
+[Set up Home Assistant →](docs/home-assistant.md) · [Install the custom integration →](https://github.com/helixzz/ha-fermax-lynx)
+
+The custom integration supports manual or HACS custom-repository installation.
+It is not yet listed in the HACS default store. Visitor images are periodic stills;
+two-way audio and physical door-position sensing are not implemented.
 
 ## Is this right for your installation?
 

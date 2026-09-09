@@ -99,6 +99,34 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     if(directory)for(const command of ['lcd_home','lcd_settings','lcd_sound','lcd_outputs']){
       await scenario(command);const file=command.replaceAll('_','-')+'.webp';captured.push({file,sha256:hash(fs.readFileSync(path.join(directory,file)))});
     }
+    // Exercise the real, isolated API through the administrator pairing UI.
+    await admin.locator('[data-setting=integrationSettings]').click();
+    await admin.waitForFunction(()=>document.querySelectorAll('#integrationPanels input').length===2);
+    assert.equal(await admin.locator('[name=integrationPermission]:checked').count(),0);
+    await admin.locator('#integrationName').fill('示例 Home Assistant');
+    await shot(admin,'admin-integration-pairing','#integrationPairForm');
+    for(const [width,height] of [[390,844],[768,1024],[1024,768]]){await admin.setViewportSize({width,height});await noOverlap();}
+    await admin.evaluate(()=>document.body.style.zoom='2');await noOverlap();await admin.evaluate(()=>document.body.style.zoom='');
+    await admin.locator('#integrationPanels input[value=side]').uncheck();
+    await admin.locator('#integrationPassword').fill('synthetic-phone-password');
+    await admin.locator('#createIntegrationCode').click();await admin.locator('#integrationCodeBox').waitFor({state:'visible'});
+    assert.equal(await admin.locator('#integrationPassword').inputValue(),'');
+    const pairingCode=await admin.locator('#integrationCode').textContent();
+    const pairedResponse=await context.request.post(origin+'/v1/integration/pair',{data:{code:pairingCode}});
+    assert.equal(pairedResponse.status(),200);const paired=await pairedResponse.json();
+    assert.deepEqual([...paired.integration.permissions].sort(),['events','state']);assert.equal(paired.integration.panels.length,1);
+    const bearer={Authorization:'Bearer '+paired.token};
+    assert.equal((await context.request.get(origin+'/v1/integration/state',{headers:bearer})).status(),200);
+    assert.equal((await context.request.post(origin+'/v1/integration/pair',{data:{code:pairingCode}})).status(),401);
+    await admin.locator('[data-setting=phoneMusicSettings]').click();assert.equal(await admin.locator('#integrationCode').textContent(),'');
+    await admin.locator('[data-setting=integrationSettings]').click();await admin.locator('#revokeIntegrationForm').waitFor({state:'visible'});
+    assert((await admin.locator('#integrationList').textContent()).includes('示例 Home Assistant'));
+    assert(!(await admin.locator('#integrationList').textContent()).includes('侧门入口'));
+    await shot(admin,'admin-integration-grants','#integrationList');
+    await admin.locator('#revokeIntegrationPassword').fill('synthetic-phone-password');
+    await admin.locator('#revokeIntegrationForm button').click();await admin.locator('#revokeIntegrationForm').waitFor({state:'hidden'});
+    assert.equal(await admin.locator('#revokeIntegrationPassword').inputValue(),'');
+    assert.equal((await context.request.get(origin+'/v1/integration/state',{headers:bearer})).status(),401);
     await admin.locator('[data-setting=phoneMusicSettings]').click();await admin.locator('#ringtoneChoice').waitFor({state:'visible'});
     await shot(admin,'admin-settings','#settings');await shot(admin,'admin-ringtone','#phoneMusicSettings');assert.equal(await admin.locator('[data-tone]').count(),16);for(const button of await admin.locator('[data-tone]').all()){await button.click();await admin.waitForFunction(()=>document.querySelector('#musicStatus').textContent.includes('正在试听'));await admin.locator('#stopRingtone').click();}await shot(admin,'admin-ringtone-library','#phoneMusicSettings');
     for(const [width,height] of [[768,1024],[390,844],[844,390]]){await admin.setViewportSize({width,height});await noOverlap();const original=await admin.locator('#phoneLink').textContent();await admin.locator('#phoneLink').evaluate(node=>node.textContent='进入客厅平板话机模式 · 长标签测试');await noOverlap();await admin.locator('#phoneLink').evaluate((node,text)=>node.textContent=text,original);}
@@ -196,7 +224,7 @@ const browsers=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     assert.equal(await admin.locator('#settings').isVisible(),false);
     assert.equal(await admin.locator('#showSettings').getAttribute('aria-expanded'),'false');
     assert.deepEqual(errors,[]);assert.ok(count>0);
-    if(directory){const sources={};for(const file of ['fermax/gateway_audio.py','fermax/display.py','fermax/web/gateway-audio.js','fermax/state.py','fermax/statistics.py','fermax/phone_preferences.py','fermax/api.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
-    console.log(engine+' PASS: admin music upload/settings, four clocks, preferences, 4:3 full viewport, ring expiry, mute, portrait/mobile, stale video, offline and revoked demos');
+    if(directory){const sources={};for(const file of ['fermax/gateway_audio.py','fermax/display.py','fermax/web/gateway-audio.js','fermax/state.py','fermax/statistics.py','fermax/phone_preferences.py','fermax/api.py','fermax/integrations.py','fermax/web/app.js','fermax/web/ringtones.json','tests/phone_fixture.py','tests/phone_experience.cjs','fermax/web/phone.html','fermax/web/phone.css','fermax/web/phone.js','fermax/web/clock.js','fermax/web/ringtone.js','fermax/web/index.html','fermax/web/style.css','fermax/web/settings.js'])sources[file]=hash(fs.readFileSync(file));fs.writeFileSync(path.join(directory,'manifest.json'),JSON.stringify({kind:'synthetic-ui-demo',browser:engine,source_sha256:sources,images:captured},null,2)+'\n');}
+    console.log(engine+' PASS: administrator integration pairing/scope/revocation, music upload/settings, four clocks, preferences, 4:3 full viewport, ring expiry, mute, portrait/mobile, stale video, offline and revoked demos');
   }finally{if(browser)await browser.close();fixture.stdin.end();const timer=setTimeout(()=>fixture.kill('SIGTERM'),3000);if(fixture.exitCode===null)await once(fixture,'exit');clearTimeout(timer);lines.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

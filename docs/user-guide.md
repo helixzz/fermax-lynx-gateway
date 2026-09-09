@@ -197,3 +197,17 @@ An enrolled foreground phone requests a screen wake lock independently of sound 
 Unsupported/insecure pages display the reason instead of claiming success. On iPad, use Settings → Display & Brightness → Auto-Lock → Never, if available. A website cannot change that system setting. Background or manually locked-screen ringing remains unsupported.
 
 Sources: [Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/), [Safari 18.4](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/), [Wake Lock specification](https://www.w3.org/TR/screen-wake-lock/).
+
+## Home Assistant pairing preview
+
+Start with the [Home Assistant installation and recovery guide](home-assistant.md).
+Requires gateway 0.7.0+ and HA 2026.9.0+; no MQTT broker or additional HA OS service.
+Use manual installation or a HACS custom repository; default-store listing is pending.
+
+The administrator’s External integrations section groups entrance scope and permissions. Pairing starts with read-only access and requires password confirmation.
+
+![Home Assistant pairing permissions using synthetic data](demo/admin-integration-pairing.webp)
+
+After pairing, review each system’s scope and revoke its access separately with administrator confirmation.
+
+![Paired system with its granted entrance and permissions](demo/admin-integration-grants.webp)

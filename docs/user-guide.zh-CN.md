@@ -192,3 +192,17 @@ Safari 的支持随系统版本而异：iPadOS 16.4 起提供标准 Fullscreen A
 不满足条件时，页面明确说明原因。可在 iPad **设置 → 显示与亮度 → 自动锁定 → 永不**（如可选）调整；网页不能替你修改系统设置。后台或手动锁屏仍不保证响铃。
 
 参考：[Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/)、[Safari 18.4](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/)、[Wake Lock规范](https://www.w3.org/TR/screen-wake-lock/)。
+
+## Home Assistant 配对预览
+
+完整步骤见 [Home Assistant 安装、权限与恢复说明](home-assistant.md)。需要网关
+0.7.0+、HA 2026.9.0+；无需 MQTT 或额外 HA OS 服务。可手动安装或使用 HACS
+自定义仓库；尚未进入 HACS 默认商店。
+
+管理员设置的“外部集成”分类集中提供入口授权与权限选择。默认只读；生成配对码前再次输入管理员密码。
+
+![Home Assistant 配对权限设置，合成示例](demo/admin-integration-pairing.webp)
+
+配对后可查看每个系统的访问范围，并使用密码验证单独撤销。
+
+![已配对外部系统及其入口、权限](demo/admin-integration-grants.webp)

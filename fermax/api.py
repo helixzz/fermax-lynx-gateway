@@ -1,5 +1,7 @@
 import csv
 import io
+import math
+import uuid
 import json
 import sqlite3
 import time
@@ -12,6 +14,7 @@ from urllib.parse import parse_qs, urlsplit
 from .config import validate, load
 from .state import atomic_json
 from .phone import Devices
+from .integrations import Integrations
 from .phone_preferences import MAX_MUSIC_BYTES
 
 WEB = Path(__file__).resolve().parent/'web'
@@ -22,7 +25,10 @@ def server(state, auth, address=('127.0.0.1', 8765)):
     with auth.lock:
         if not hasattr(auth, 'devices'):
             auth.devices = Devices(auth)
+        if not hasattr(auth, 'integrations'):
+            auth.integrations = Integrations(auth, state)
     devices = auth.devices
+    integrations = auth.integrations
 
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
@@ -143,6 +149,125 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 return self.send(404, {'error':'暂无视频帧'})
             return self.send(404, {'error':'Not found'})
 
+        def integration_token(self):
+            header = self.headers.get('Authorization', '')
+            return header[7:] if header.startswith('Bearer ') else ''
+
+        def integration_grant(self):
+            try:
+                grant = integrations.authorized(self.integration_token())
+            except (ValueError, OSError, KeyError, TypeError):
+                grant = None
+            if not grant:
+                self.send(401, {'error': 'Integration authorization unavailable or revoked'})
+            return grant
+
+        def integration_stream(self, grant):
+            if not integrations.slots.acquire(blocking=False):
+                return self.send(503, {'error': 'Integration stream limit'}, extra={'Retry-After': '5'})
+            try:
+                self.connection.settimeout(2)
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('X-Accel-Buffering', 'no')
+                self.end_headers()
+                self.close_connection = True
+                def emit(kind, body, cursor=None):
+                    prefix = f'id: {cursor}\n' if cursor else ''
+                    raw = json.dumps(body, ensure_ascii=False, separators=(',', ':'))
+                    self.wfile.write(f'{prefix}event: {kind}\ndata: {raw}\n\n'.encode())
+                    self.wfile.flush()
+                with state.lock:
+                    baseline = integrations.head()
+                    first = integrations.snapshot(grant)
+                requested = self.headers.get('Last-Event-ID')
+                after = integrations.parse_cursor(requested, baseline) if requested else baseline
+                emit('snapshot', first)
+                if after is None:
+                    after = baseline
+                    emit('reset', {'reason': 'cursor_reset', 'cursor': integrations.cursor(baseline)})
+                replay = True
+                previous, last_send = None, time.monotonic()
+                while not result.stopping.is_set():
+                    try:
+                        current = integrations.authorized(self.integration_token())
+                    except (ValueError, OSError, KeyError, TypeError):
+                        current = None
+                    if not current:
+                        emit('unauthorized', {})
+                        return
+                    events, scanned = integrations.batch(current, after, baseline if replay else None)
+                    for event in events:
+                        emit('event', event | {'replayed': replay}, event['id'])
+                    if scanned != after:
+                        after = scanned
+                        emit('checkpoint', {'cursor': integrations.cursor(after)}, integrations.cursor(after))
+                    if replay and after >= baseline:
+                        replay = False
+                        emit('ready', {'cursor': integrations.cursor(after)}, integrations.cursor(after))
+                    if replay:
+                        continue
+                    snapshot = integrations.snapshot(current)
+                    signature = json.dumps(snapshot['state'], sort_keys=True)
+                    now = time.monotonic()
+                    if signature != previous or now-last_send >= 15:
+                        emit('snapshot' if signature != previous else 'heartbeat', snapshot)
+                        previous, last_send = signature, now
+                    result.stopping.wait(0.5)
+            except (OSError, TimeoutError):
+                pass
+            finally:
+                integrations.slots.release()
+
+        def integration_get(self, path):
+            grant = self.integration_grant()
+            if not grant:
+                return
+            if path == '/v1/integration/state':
+                return self.send(200, integrations.snapshot(grant))
+            if path == '/v1/integration/events':
+                return self.integration_stream(grant)
+            if path == '/v1/integration/frame.jpg':
+                if 'camera' not in grant['permissions']:
+                    return self.send(403, {'error': 'Camera permission required'})
+                panel = parse_qs(urlsplit(self.path).query).get('panel', [None])[0]
+                if panel not in grant['panels']:
+                    return self.send(403, {'error': 'Panel not authorized'})
+                with state.lock:
+                    image = state.video_jpeg
+                    fresh = panel == state.panel_id and image and state.mono()-state.video_updated < 5
+                return self.send(200, image, 'image/jpeg') if fresh else self.send(404, {'error': 'No fresh frame'})
+            return self.send(404, {'error': 'Not found'})
+
+        def integration_control(self, data):
+            grant = self.integration_grant()
+            if not grant:
+                return
+            action, panel = data.get('action'), data.get('panel')
+            if action not in ('preview', 'hangup', 'open') or action not in grant['permissions'] or panel not in grant['panels']:
+                return self.send(403, {'error': 'Action or panel not authorized'})
+            identity = data.get('request_id')
+            if not isinstance(identity, str):
+                raise ValueError('UUID request_id required')
+            identity = grant['id']+':'+uuid.UUID(identity).hex
+            expires = data.get('expires_at')
+            if type(expires) not in (int, float) or not math.isfinite(expires):
+                raise ValueError('Finite expires_at required')
+            call = data.get('call_id')
+            if call is not None and (not isinstance(call, str) or len(call) > 128):
+                raise ValueError('Invalid call_id')
+            token = self.integration_token()
+            deadline = state.mono()+max(0, min(30, expires-state.wall()))
+            def guard(relay=None):
+                return integrations.guard(token, action, panel, call, expires, deadline, relay)
+            try:
+                with state.lock, guard():
+                    response = state.control(action, panel, identity, expected_call=call, phone=True, guard=guard)
+            except ValueError as error:
+                return self.send(409, {'error': str(error)})
+            return self.send(202, response)
+
         def authorized(self):
             header = self.headers.get('Authorization', '')
             bearer = header[7:] if header.startswith('Bearer ') else ''
@@ -168,11 +293,15 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 return self.send(200, (WEB/name).read_bytes(), mime)
             if path == '/health':
                 return self.send(200, {'status':'ok', 'mode':'live'})
+            if path.startswith('/v1/integration/'):
+                return self.integration_get(path)
             if path.startswith('/v1/phone/'):
                 return self.phone_get(path)
             if not self.authorized():
                 return
             try:
+                if path == '/v1/integrations':
+                    return self.send(200, {'integrations': integrations.list()})
                 if path == '/v1/gateway-audio':
                     return self.send(200,state.gateway_audio.snapshot())
                 if path == '/v1/phone-preferences':
@@ -241,13 +370,18 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError('请求格式无效')
-                if self.path in ('/v1/login','/v1/password','/v1/phone/enroll','/v1/devices/revoke') and auth.limited(self.client_address[0]):
+                if self.path in ('/v1/login','/v1/password','/v1/phone/enroll','/v1/devices/revoke','/v1/integration/pair','/v1/integrations/pairing','/v1/integrations/revoke') and auth.limited(self.client_address[0]):
                     return self.send(429, {'error':'Too many attempts; retry later'})
                 if self.path == '/v1/login':
                     session = auth.login(data.get('password',''))
                     if not session:
                         return self.send(401, {'error':'Incorrect password'})
                     return self.send(200, {'ok':True}, extra={'Set-Cookie':f'fermax={session}; HttpOnly; SameSite=Strict; Path=/; Max-Age=86400'})
+                if self.path == '/v1/integration/pair':
+                    paired = integrations.pair(data.get('code'))
+                    return self.send(200, paired) if paired else self.send(401, {'error': 'Invalid or expired pairing code'})
+                if self.path == '/v1/integration/control':
+                    return self.integration_control(data)
                 if self.path == '/v1/phone/session':
                     grant = self.cookie('fermax_device')
                     renewed = devices.renew(grant)
@@ -278,6 +412,13 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                     return self.send(202, response)
                 if not self.authorized():
                     return
+                if self.path in ('/v1/integrations/pairing', '/v1/integrations/revoke'):
+                    if not auth.verify(data.get('password')):
+                        return self.send(401, {'error': '管理员密码不正确'})
+                    if self.path.endswith('/pairing'):
+                        return self.send(200, integrations.pairing(data.get('name'), data.get('panels'), data.get('permissions', ['state', 'events'])))
+                    integrations.revoke(data.get('id'))
+                    return self.send(200, {'ok': True})
                 if self.path == '/v1/phone/enroll':
                     if not auth.verify(data.get('password')):
                         return self.send(401, {'error':'管理员密码不正确'})

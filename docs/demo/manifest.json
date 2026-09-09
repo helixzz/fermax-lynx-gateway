@@ -5,22 +5,23 @@
     "fermax/gateway_audio.py": "f44d0d76d9c6b28bacc392ca14647c60e9f81f3dafa9167b28eeaea3844e7414",
     "fermax/display.py": "6db7a255dc775e9e7187cdf292aa05893c4f30e434653571a02b137af8088b40",
     "fermax/web/gateway-audio.js": "c16f6073b8715083a0e1f585803d9833782f7a46c35ee9bacb259de26e3a7aec",
-    "fermax/state.py": "3ccc33276bcd4e6a247a88a93b050b5404a6c23dfbc97655d698e3ad838182e0",
+    "fermax/state.py": "4f64eb8026a329e0bb6b2026dce7a6761362525750ca9da60e2ffd7f8e6b322c",
     "fermax/statistics.py": "d3f676da77700a44e3e77d3501dff6e74297fbf51c6f547ad2aa8c7342689981",
     "fermax/phone_preferences.py": "138a9816795d5ded2b56d2c6ade1844287c552e2f80739bdda3abd630c532f3d",
-    "fermax/api.py": "b9bb964d0c8aa05b32f773e4b12837939b008d5924f7c85039eda015d29ef9d1",
+    "fermax/api.py": "2cd77c678bea67132dd281135c2d4b95a35500f4ab3d3de243dcce08bc4f2920",
+    "fermax/integrations.py": "f9b57e21088dc0f3e154b67ae84bb8acd209c745fa53c5a81366305f6a38e8bc",
     "fermax/web/app.js": "ab404ad7e8e82f59b5ffe0f74a1e78260a677a3e67a4a4a8017e9c0034018b6b",
     "fermax/web/ringtones.json": "dd8f357f0cdb9fcc419752992570747a8a1ab1d4d2ac015c9ee2e8c4296e27e4",
-    "tests/phone_fixture.py": "f33435b823a5146b38e6900ebb6546b11f8b078c75ad5118b6385de50755670a",
-    "tests/phone_experience.cjs": "1425b9dbe3b8cedc98bee3dc488880a94a638ffb6a0f8756e08616d7da2e74aa",
+    "tests/phone_fixture.py": "7c7bf9c935809179f6bc6fd1922f28615c4a17927d281646154dc8010b25b2c6",
+    "tests/phone_experience.cjs": "7a3f9de14260935c10c4a81a5b14bf7de1da104ac73b2c67883e42f162c8d797",
     "fermax/web/phone.html": "680f9dd7c05ec63d294e4899217f5ca987db6b8995094b49ac6b5ef59ccf4fb4",
     "fermax/web/phone.css": "c029698985f650fb91c9f54170d76d9270d8c8b49e76c22607a7e1a3a38a3d94",
     "fermax/web/phone.js": "abf2c84407710c9a2d77b8146e042ad3a8dfe03f0dbb47349eb6ee52e5d1f9ee",
     "fermax/web/clock.js": "0e9ead066de1444a73145fce0cc847fd6dadca7d838cde71c07ca2451128f667",
     "fermax/web/ringtone.js": "ec007604da55c6f9dd3bfb033d7245623b936bd097017fc87dc1aafa65c03efd",
     "fermax/web/index.html": "b33ae87385ad3e6332564cbca3b565935b8a8325c60220058c04ff527dfbe840",
-    "fermax/web/style.css": "6d0ae784d6be3f7b87a4c2f9fc3504d6dd0fcdee77f5c4a44ba332af9659e8fc",
-    "fermax/web/settings.js": "10096e80439b42575de7dc04febe04c4c62aa1c7dfa52e5b2f4d433fb1d9b95d"
+    "fermax/web/style.css": "9805eefd1eb6c277b79281034405bf26246f5af4b04a65070057b1cec6b9b179",
+    "fermax/web/settings.js": "19f14cbfa5dc043690be27d06fe23de1def3fd41895cb8917a61aa063440c3fd"
   },
   "images": [
     {
@@ -53,11 +54,11 @@
     },
     {
       "file": "admin-gateway-sound.webp",
-      "sha256": "f74e51ba6796120255f7d16683f9b39cd877a22993247b32710598c0057eae67"
+      "sha256": "2a613fe709ccd8f0c6db29bc821b3624b3e0a6dc83821edd79559259fb8cb92c"
     },
     {
       "file": "admin-gateway-no-device.webp",
-      "sha256": "f3ef7d2d93bd90dce14a9be4790367e062387f7e5c72a374a9bc852f2e669a70"
+      "sha256": "d587d7d32ed0cc870a42982c71b95546dc32117fb7be3847b42fe2d99489e03d"
     },
     {
       "file": "lcd-home.webp",
@@ -76,24 +77,32 @@
       "sha256": "4bc53790dcb1ade07b41cc202c6460a7b93796c9aa6097384e7b752d202d9058"
     },
     {
+      "file": "admin-integration-pairing.webp",
+      "sha256": "cd87da0dc27f2adc936864dd6811699d08b8848e18f11e63562856bdd6cccf6d"
+    },
+    {
+      "file": "admin-integration-grants.webp",
+      "sha256": "cf6e16fbda4f77d3442f1325357b9586551f459887b308862061f543fa9be5a0"
+    },
+    {
       "file": "admin-settings.webp",
-      "sha256": "4a0280f5b6d7835f8af1011ba7033892f652a6254bebab2fad01e95cafa047a0"
+      "sha256": "1afba6de54d475fb47be63a1b085220e3bb8da7da000733ff131cef6f245e6e6"
     },
     {
       "file": "admin-ringtone.webp",
-      "sha256": "47d6e41f561e2b10f091201fe800b3fb1b82528715dc78054b4766b688970690"
+      "sha256": "5fc9106524fbdcda8757b2f0ea3c4397de3e1f4f038759e8e802b87ea9e9cd1c"
     },
     {
       "file": "admin-ringtone-library.webp",
-      "sha256": "4b8e2ae12585c1e461124c5026243d3ed25c146f227e8ac28ea14fd537160058"
+      "sha256": "1c2fbc3ee66a5cc6c8a77830ca8671849f230f580714a3a0cfdc5e7f40d70662"
     },
     {
       "file": "admin-network.webp",
-      "sha256": "e2bd4846331670ec99afb807f118e9ed8d83862fcc7f79c3e3a2d9b06501eb53"
+      "sha256": "0054cdbb58db4cd023361eb30f972a436702e1ca5af601b08ea268ba8b3060c7"
     },
     {
       "file": "admin-password.webp",
-      "sha256": "df1c41f76d4e914b34fc408aac3bf5af00d37ffe42630b1a8823e961c49556ed"
+      "sha256": "ea126c33701ea6e032fe69c144b23e6908c7d824465e033e3df6cab09fdbb271"
     },
     {
       "file": "admin-journal.webp",
@@ -101,7 +110,7 @@
     },
     {
       "file": "admin-custom-music.webp",
-      "sha256": "b2cf8319ffc504c14006775cc90329cb02b8b6281e0c54d73965da534bda1067"
+      "sha256": "79432d3e4dafdb4376bd98cb5103f7e99abad84bfbb29667ab0cdc0c64ce643f"
     },
     {
       "file": "phone-enrollment.webp",
@@ -129,7 +138,7 @@
     },
     {
       "file": "clock-analog.webp",
-      "sha256": "74175a8337fe842ba6b318fd900e604d79e4333203e7b55ffd3f1d81542d9e36"
+      "sha256": "2534211603a5ca16c29332c353b9e28f2eee6bc1bce8c7f271454496c20c4871"
     },
     {
       "file": "clock-nixie.webp",
@@ -189,7 +198,7 @@
     },
     {
       "file": "admin-devices.webp",
-      "sha256": "e507de28d3c05dbd21676891443a58dc95ea38c3ae0de45ac40493f6889abece"
+      "sha256": "d148c111323b479ebf83d600277ccb2abf8a134527a02ed082bb1bb631c064f5"
     },
     {
       "file": "phone-revoked.webp",

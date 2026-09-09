@@ -4,7 +4,7 @@ For the separate scoped tablet credentials, renewable sessions and state stream,
 
 The service listens on loopback and the configured home IPv4 address. Default port: 8765. `GET /health` and static UI files are public; all other GET endpoints require authentication. Health means process availability; check `network` in state for building connectivity.
 
-Use `Authorization: Bearer <api-token>` for integrations. The web client exchanges its password for a random HttpOnly/SameSite=Strict session cookie, valid for up to 24 hours. Password changes and command-line resets revoke all web sessions. Sessions also end when the service restarts. API tokens are separate and revoked through `fermax.admin api-token`.
+For Home Assistant and new integrations, use [scoped integration credentials and API](integration-api.md), issued through short-lived pairing codes. The older administrator API below accepts `Authorization: Bearer <api-token>` with full administrator access; do not give that token to the HA custom integration. The web client exchanges its password for a random HttpOnly/SameSite=Strict session cookie, valid for up to 24 hours. Password changes and command-line resets revoke all web sessions and scoped integration grants. Sessions also end when the service restarts. Legacy administrator API tokens are separate and revoked through `fermax.admin api-token`.
 
 | Method / path | Request / result |
 |---|---|

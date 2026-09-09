@@ -59,11 +59,82 @@ document.querySelector('#revokeDeviceForm').addEventListener('submit',async even
   try{await api('/v1/devices/revoke',{id:document.querySelector('#revokeDeviceId').value,password:password.value});await refreshDevices()}
   catch(e){error(e)}finally{password.value=''}
 });
-const settingIds=['gatewayAudioSettings','phoneMusicSettings','phoneDevicesSettings','configForm','passwordForm'];
-function selectSettings(id){stopMusic();for(const pane of settingIds)document.getElementById(pane).hidden=pane!==id;document.querySelectorAll('[data-setting]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.setting===id)));}
+const integrationSection=document.createElement('section');integrationSection.id='integrationSettings';
+integrationSection.innerHTML=`<h3>连接 Home Assistant</h3><p class="muted">直接连接网关，无需 MQTT。在 Home Assistant 安装 FERMAX LYNX Gateway 集成后，添加集成并输入网关地址和下方配对码。</p>
+<form id="integrationPairForm"><div class="settingsGrid"><label>集成名称<input id="integrationName" value="Home Assistant" maxlength="60" required></label><label>再次验证管理员密码<input id="integrationPassword" type="password" autocomplete="current-password" required></label></div>
+<fieldset><legend>允许访问的入口</legend><div id="integrationPanels" class="integrationOptions"></div></fieldset>
+<fieldset><legend>授予权限</legend><p class="muted">默认只读：状态、统计和来访事件。以下权限可单独选用。</p><div class="integrationOptions">
+<label><input type="checkbox" checked disabled>状态与统计（必选）</label><label><input type="checkbox" checked disabled>来访事件（必选）</label>
+<label><input type="checkbox" name="integrationPermission" value="camera">查看当前画面</label><label><input type="checkbox" name="integrationPermission" value="preview">主动预览</label><label><input type="checkbox" name="integrationPermission" value="hangup">结束来访</label><label><input type="checkbox" name="integrationPermission" value="open" aria-describedby="integrationOpenWarning">允许开门</label></div>
+<p id="integrationOpenWarning" class="integrationWarning">开门权限允许外部系统发送开门指令，包括它的自动化。请仅授予可信系统；默认关闭。</p></fieldset>
+<button id="createIntegrationCode" class="primary" disabled>生成一次性配对码</button><p id="integrationPairStatus" class="muted" role="status"></p>
+<div id="integrationCodeBox" class="integrationCodeBox" hidden><p>请现在复制到 Home Assistant；关闭此页面后不再显示。</p><code id="integrationCode"></code><p id="integrationCodeExpiry" class="muted"></p></div></form>
+<div class="sectionHead"><h3>已授权的外部系统</h3><button id="refreshIntegrations" type="button" class="quiet">刷新列表</button></div><p class="muted">配对完成后刷新列表。撤销会立即终止该集成的访问；修改管理员密码也会撤销全部集成。</p><ul id="integrationList"></ul>
+<form id="revokeIntegrationForm" hidden><div class="settingsGrid"><label>撤销集成<select id="revokeIntegrationId" required></select></label><label>再次验证管理员密码<input id="revokeIntegrationPassword" type="password" autocomplete="current-password" required></label></div><button>撤销集成授权</button></form>`;
+settingsPanel.append(integrationSection);
+const integrationTab=document.createElement('button');integrationTab.type='button';integrationTab.dataset.setting='integrationSettings';integrationTab.textContent='外部集成';integrationTab.setAttribute('aria-pressed','false');settingsPanel.querySelector('.settingsNav').append(integrationTab);
+const integrationPermissionNames={state:'状态与统计',events:'来访事件',camera:'当前画面',preview:'主动预览',hangup:'结束来访',open:'开门'};
+let integrationGeneration=0,integrationCodeTimer,integrationExpires=0,integrationLoading=false,integrationPairing=false;
+function clearIntegrationCode(){
+  integrationGeneration++;clearInterval(integrationCodeTimer);integrationExpires=0;
+  document.querySelector('#integrationCode').textContent='';document.querySelector('#integrationCodeExpiry').textContent='';document.querySelector('#integrationCodeBox').hidden=true;
+  document.querySelector('#integrationPassword').value='';document.querySelector('#revokeIntegrationPassword').value='';document.querySelector('#integrationPairStatus').textContent='';
+}
+function integrationActive(generation){return generation===integrationGeneration&&!settingsPanel.hidden&&!integrationSection.hidden;}
+function updateIntegrationButton(){document.querySelector('#createIntegrationCode').disabled=integrationLoading||integrationPairing||!document.querySelector('#integrationPanels input:checked');}
+async function refreshIntegrations(){
+  if(integrationLoading)return;
+  const generation=integrationGeneration;integrationLoading=true;updateIntegrationButton();
+  const refresh=document.querySelector('#refreshIntegrations');refresh.disabled=true;
+  try{
+    const [result,snapshot]=await Promise.all([api('/v1/integrations'),api('/v1/state')]);
+    if(!integrationActive(generation))return;
+    const names=Object.fromEntries(snapshot.panels.map(panel=>[panel.id,panel.name]));
+    const panels=document.querySelector('#integrationPanels');
+    const selected=new Set(Array.from(panels.querySelectorAll('input:checked'),input=>input.value)),hadPanels=!!panels.children.length;
+    panels.replaceChildren();
+    for(const panel of snapshot.panels){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=panel.id;input.checked=hadPanels?selected.has(panel.id):true;input.addEventListener('change',updateIntegrationButton);label.append(input,document.createTextNode(panel.name));panels.append(label);}
+    if(!snapshot.panels.length)panels.textContent='暂无可授权入口，请先配置门口机。';
+    const list=document.querySelector('#integrationList'),select=document.querySelector('#revokeIntegrationId');list.replaceChildren();select.replaceChildren();
+    for(const grant of result.integrations){const item=document.createElement('li'),name=document.createElement('strong'),detail=document.createElement('p'),option=document.createElement('option');
+      name.textContent=grant.name;detail.className='muted';detail.textContent=grant.panels.map(id=>names[id]||id).join(' / ')+' · '+grant.permissions.map(key=>integrationPermissionNames[key]||key).join('、');item.append(name,detail);list.append(item);option.value=grant.id;option.textContent=grant.name;select.append(option);}
+    if(!result.integrations.length)list.textContent='暂无已配对的外部系统';
+    document.querySelector('#revokeIntegrationForm').hidden=!result.integrations.length;
+  }catch(e){if(integrationActive(generation)){document.querySelector('#integrationPairStatus').textContent='无法读取集成或入口列表，请重试。';error(e);}}
+  finally{integrationLoading=false;refresh.disabled=false;updateIntegrationButton();}
+}
+document.querySelector('#refreshIntegrations').addEventListener('click',refreshIntegrations);
+document.querySelector('#integrationPairForm').addEventListener('submit',async event=>{
+  event.preventDefault();if(integrationPairing||integrationLoading)return;
+  const panels=Array.from(document.querySelectorAll('#integrationPanels input:checked'),input=>input.value);
+  if(!panels.length){document.querySelector('#integrationPairStatus').textContent='请至少选择一个入口。';return;}
+  const password=document.querySelector('#integrationPassword').value,name=document.querySelector('#integrationName').value.trim();
+  if(!name){document.querySelector('#integrationPairStatus').textContent='请输入集成名称。';return;}
+  const permissions=['state','events',...Array.from(document.querySelectorAll('[name="integrationPermission"]:checked'),input=>input.value)];
+  clearIntegrationCode();const generation=integrationGeneration;integrationPairing=true;updateIntegrationButton();
+  try{
+    const result=await api('/v1/integrations/pairing',{password,name,panels,permissions});
+    if(!integrationActive(generation))return;
+    integrationExpires=Date.now()+Math.min(300,Number(result.expires_in)||0)*1000;
+    document.querySelector('#integrationCode').textContent=result.code;document.querySelector('#integrationCodeBox').hidden=false;
+    const tick=()=>{const seconds=Math.max(0,Math.ceil((integrationExpires-Date.now())/1000));if(!seconds){clearIntegrationCode();document.querySelector('#integrationPairStatus').textContent='配对码已过期，请重新生成。';return;}document.querySelector('#integrationCodeExpiry').textContent='剩余 '+seconds+' 秒 · 仅可使用一次，请勿分享给他人。';};
+    tick();if(integrationExpires)integrationCodeTimer=setInterval(tick,1000);
+  }catch(e){if(integrationActive(generation)){document.querySelector('#integrationPairStatus').textContent='未生成配对码，请检查密码后重试。';error(e);}}
+  finally{integrationPairing=false;updateIntegrationButton();}
+});
+document.querySelector('#revokeIntegrationForm').addEventListener('submit',async event=>{
+  event.preventDefault();const button=event.currentTarget.querySelector('button');if(button.disabled)return;
+  const input=document.querySelector('#revokeIntegrationPassword'),password=input.value,id=document.querySelector('#revokeIntegrationId').value;input.value='';button.disabled=true;const generation=integrationGeneration;
+  try{await api('/v1/integrations/revoke',{password,id});if(integrationActive(generation)){await refreshIntegrations();document.querySelector('#integrationPairStatus').textContent='已撤销该集成的访问权限。';}}
+  catch(e){if(integrationActive(generation))error(e)}finally{button.disabled=false;}
+});
+window.addEventListener('pagehide',clearIntegrationCode);
+window.addEventListener('fermax-logout',()=>{clearIntegrationCode();document.querySelector('#integrationPairForm').reset();document.querySelector('#integrationList').replaceChildren();document.querySelector('#integrationPanels').replaceChildren();document.querySelector('#revokeIntegrationId').replaceChildren();document.querySelector('#revokeIntegrationForm').hidden=true;updateIntegrationButton();});
+const settingIds=['gatewayAudioSettings','phoneMusicSettings','phoneDevicesSettings','integrationSettings','configForm','passwordForm'];
+function selectSettings(id){stopMusic();clearIntegrationCode();for(const pane of settingIds)document.getElementById(pane).hidden=pane!==id;document.querySelectorAll('[data-setting]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.setting===id)));if(id==='integrationSettings')refreshIntegrations();}
 document.querySelectorAll('[data-setting]').forEach(button=>button.addEventListener('click',()=>selectSettings(button.dataset.setting)));
 selectSettings('gatewayAudioSettings');
-function closeSettings(){stopMusic();settingsPanel.hidden=true;document.querySelector('#overview').hidden=false;document.querySelector('.journal').hidden=false;document.querySelector('#showSettings').setAttribute('aria-expanded','false');document.querySelector('#showSettings').focus();}
+function closeSettings(){stopMusic();clearIntegrationCode();settingsPanel.hidden=true;document.querySelector('#overview').hidden=false;document.querySelector('.journal').hidden=false;document.querySelector('#showSettings').setAttribute('aria-expanded','false');document.querySelector('#showSettings').focus();}
 document.querySelector('#backOverview').addEventListener('click',closeSettings);
 document.querySelector('#showSettings').addEventListener('click',async()=>{
   if(!settingsPanel.hidden){closeSettings();return;}
