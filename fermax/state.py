@@ -131,7 +131,7 @@ class State:
             label = '关闭' if minutes is None else ('无时限' if minutes == 0 else f'{minutes} 分钟')
             self.event('自动开门：'+label, 'auto_changed', policy)
 
-    def control(self, action, panel=None, request_id=None, *, expected_call=None, phone=False):
+    def control(self, action, panel=None, request_id=None, *, expected_call=None, phone=False, guard=None):
         if action not in ('preview', 'answer', 'open', 'hangup'):
             raise ValueError('Unknown action')
         if panel is not None and panel not in [p['id'] for p in self.config['panels']]:
@@ -160,7 +160,7 @@ class State:
             self.db.commit()
             try:
                 if phone:
-                    self.controller.enqueue(action, panel, request_id, expected_call, True)
+                    self.controller.enqueue(action, panel, request_id, expected_call, True, **({'guard': guard} if guard else {}))
                 else:
                     self.controller.enqueue(action, panel, request_id)
             except Exception:

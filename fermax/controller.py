@@ -1,4 +1,5 @@
 """Live gateway orchestration. All building I/O is owned by one worker thread."""
+from contextlib import nullcontext
 import collections
 import logging
 import queue
@@ -33,9 +34,9 @@ class Controller:
         self.control_peer = self.keep_peer = None
         self.link_checked = 0
 
-    def enqueue(self, action, panel, request_id, expected_call=None, phone=False):
+    def enqueue(self, action, panel, request_id, expected_call=None, phone=False, guard=None):
         try:
-            self.actions.put_nowait((action, panel, request_id, expected_call, phone))
+            self.actions.put_nowait((action, panel, request_id, expected_call, phone, guard))
         except queue.Full:
             raise ValueError('操作队列已满')
 
@@ -123,7 +124,7 @@ class Controller:
         self.pending_op = None
         while True:
             try:
-                action, panel, request_id, _, _ = self.actions.get_nowait()
+                action, panel, request_id = self.actions.get_nowait()[:3]
             except queue.Empty:
                 break
             self.state.event('网络断开，操作已取消', 'control_failed', {'action':action,'request_id':request_id})
@@ -134,7 +135,7 @@ class Controller:
             self.state.network = 'disconnected'
         self.video.reset()
 
-    def open(self, automatic=False, request_id=None):
+    def open(self, automatic=False, request_id=None, guard=None):
         with self.state.lock:
             if not self.sip.dialog or not self.sip.dialog.acked or not self.state.allow_open or not self.state.relays:
                 raise ValueError('门口机尚未允许开门')
@@ -143,7 +144,8 @@ class Controller:
             if automatic:
                 self.operations.append(('panelGetRelaysCommand', {'doormatic':True}, 'panelGetRelaysResponse', 'auto_relays', None))
             else:
-                self.operations.append(('panelOpenDoorCommand', {'relayName':self.state.relays[0], 'doormatic':False}, 'panelOpenDoorResponse', 'open_manual', request_id))
+                context = {'call_id': self.state.call_id, 'panel_id': self.state.panel_id}
+                self.operations.append(('panelOpenDoorCommand', {'relayName':self.state.relays[0], 'doormatic':False}, 'panelOpenDoorResponse', 'open_manual', request_id, guard, context))
 
     def result(self, purpose, pending, request_id=None):
         if pending.error:
@@ -180,11 +182,18 @@ class Controller:
                 self.result(purpose, pending, request_id)
         address = (self.remote, 52102)
         if self.operations and not self.pending_op and address in self.client.peers:
-            command, fields, response, purpose, request_id = self.operations.popleft()
+            operation = self.operations.popleft()
+            command, fields, response, purpose, request_id = operation[:5]
+            guard = operation[5] if len(operation) > 5 else None
             if purpose == 'open_auto' and not self.state.policy['enabled']:
                 return
-            pending = self.client.request(self.client.peers[address], command, fields, response)
-            self.pending_op = (pending, purpose, request_id)
+            try:
+                with self.state.lock, guard() if guard else nullcontext():
+                    pending = self.client.request(self.client.peers[address], command, fields, response)
+                    self.pending_op = (pending, purpose, request_id)
+            except (ValueError, OSError, KeyError, TypeError):
+                context = operation[6] if len(operation) > 6 else {}
+                self.state.event('集成操作已取消：授权、会话或有效期已变化', 'control_failed', {'request_id': request_id, **context})
         if self.keep_pending and (self.keep_pending.error or self.keep_pending.result is not None):
             if self.keep_pending.error or not self.keep_pending.result.get('state'):
                 self.sip.end('会话保活失败')
@@ -241,27 +250,32 @@ class Controller:
                 if push:
                     self.state.event('门口机通知：'+push.get('pushType',''), 'panel_notification', push)
         try:
-            action, panel, request_id, expected_call, phone = self.actions.get_nowait()
+            queued = self.actions.get_nowait()
+            action, panel, request_id, expected_call, phone = queued[:5]
+            guard = queued[5] if len(queued) > 5 else None
         except queue.Empty:
             pass
         else:
             try:
-                if phone and action != 'preview' and expected_call != self.state.call_id:
-                    raise ValueError('会话已变化，操作已取消')
-                if action == 'preview':
-                    self.sip.preview(self.panels[panel or next(iter(self.panels))])
-                elif action == 'answer':
-                    raise ValueError('远程语音尚未启用；可查看视频、开门或挂断')
-                elif action == 'open':
-                    self.open(request_id=request_id)
-                elif action == 'hangup':
-                    if self.pending_op and self.pending_op[1].startswith('open'):
-                        raise ValueError('正在等待开门应答，请稍后挂断')
-                    self.sip.hangup()
-            except ValueError as error:
+                with self.state.lock, guard() if guard else nullcontext():
+                    if phone and action != 'preview' and expected_call != self.state.call_id:
+                        raise ValueError('会话已变化，操作已取消')
+                    if action == 'preview':
+                        self.sip.preview(self.panels[panel or next(iter(self.panels))])
+                    elif action == 'answer':
+                        raise ValueError('远程语音尚未启用；可查看视频、开门或挂断')
+                    elif action == 'open':
+                        self.open(request_id=request_id, **({'guard': guard} if guard else {}))
+                    elif action == 'hangup':
+                        if self.pending_op and self.pending_op[1].startswith('open'):
+                            raise ValueError('正在等待开门应答，请稍后挂断')
+                        self.sip.hangup()
+            except (ValueError, OSError, KeyError, TypeError) as error:
                 detail = {'request_id':request_id}
                 if phone and action != 'preview':
                     detail['call_id'] = expected_call
+                if guard:
+                    detail.update(panel_id=panel, call_id=expected_call)
                 self.state.event(str(error), 'control_failed', detail)
         self.sip.tick()
         self.announcer.tick()
