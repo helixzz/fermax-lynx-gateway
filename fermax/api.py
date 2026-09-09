@@ -259,8 +259,8 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 raise ValueError('Invalid call_id')
             token = self.integration_token()
             deadline = state.mono()+max(0, min(30, expires-state.wall()))
-            def guard():
-                return integrations.guard(token, action, panel, call, expires, deadline)
+            def guard(relay=None):
+                return integrations.guard(token, action, panel, call, expires, deadline, relay)
             try:
                 with state.lock, guard():
                     response = state.control(action, panel, identity, expected_call=call, phone=True, guard=guard)

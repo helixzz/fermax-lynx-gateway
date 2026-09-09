@@ -124,6 +124,16 @@ class IntegrationTests(unittest.TestCase):
         self.assertIsNone(self.integrations.authorized(grant['token']))
         self.assertIsNone(self.integrations.pair(code))
 
+    def test_corrupted_store_fails_closed_without_crashing(self):
+        self.serve()
+        grant = self.grant()
+        for value in ([], None, 'invalid', {'revision': self.auth.record['revision'], 'integrations': []}):
+            with self.subTest(value=value):
+                atomic_json(self.integrations.path, value)
+                with self.assertRaises(ValueError):
+                    self.integrations.authorized(grant['token'])
+                self.assertEqual(self.request('GET', '/v1/integration/state', token=grant['token'])[0], 401)
+
     def test_admin_pairing_and_credential_separation(self):
         self.serve()
         body = {'password': PASSWORD, 'name': 'HA', 'panels': [self.panel], 'permissions': ['state', 'events']}
@@ -272,7 +282,7 @@ class IntegrationTests(unittest.TestCase):
     def test_revocation_and_staleness_at_both_dispatch_queues(self):
         self.serve()
         for stage in ('action', 'operation'):
-            for change in ('revoke', 'password', 'panel', 'call', 'expiry', 'backward_clock'):
+            for change in ('revoke', 'password', 'panel', 'call', 'expiry', 'backward_clock', 'allow_open', 'relay', 'ending', 'corrupt_store'):
                 with self.subTest(stage=stage, change=change):
                     self.state.config['panels'] = copy.deepcopy(self.config['panels'])
                     # State/config share the original object, so restore explicitly.
@@ -304,6 +314,14 @@ class IntegrationTests(unittest.TestCase):
                     elif change == 'call':
                         self.state.call_id = 'next-call'
                         self.state.panel_id = 'other'
+                    elif change == 'allow_open':
+                        self.state.allow_open = False
+                    elif change == 'relay':
+                        self.state.relays = ['replacement-relay'] if stage == 'operation' else []
+                    elif change == 'ending':
+                        self.state.call = 'ending'
+                    elif change == 'corrupt_store':
+                        atomic_json(self.integrations.path, [])
                     wall, mono = self.state.wall, self.state.mono
                     if change == 'expiry':
                         self.state.wall = lambda: body['expires_at']+1
@@ -316,6 +334,8 @@ class IntegrationTests(unittest.TestCase):
                         self.state.wall, self.state.mono = wall, mono
                     c.client.request.assert_not_called()
                     self.assertEqual(self.state.logs(limit=1)[0]['kind'], 'control_failed')
+                    if change == 'corrupt_store':
+                        self.integrations.save({})
                     if change == 'call':
                         detail = self.state.logs(limit=1)[0]['detail']
                         self.assertEqual(detail['panel_id'], self.panel)

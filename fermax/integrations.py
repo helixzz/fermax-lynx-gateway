@@ -39,6 +39,8 @@ class Integrations:
         if not self.path.exists():
             return {}
         data = json.loads(self.path.read_text())
+        if not isinstance(data, dict):
+            raise ValueError('Invalid integration store')
         if data.get('revision') != self.auth.record['revision']:
             return {}
         grants = data['integrations']
@@ -164,7 +166,7 @@ class Integrations:
             return events, rows[-1]['id'] if rows else head
 
     @contextmanager
-    def guard(self, token, action, panel, call_id, expires_at, deadline):
+    def guard(self, token, action, panel, call_id, expires_at, deadline, relay=None):
         # Caller holds state.lock; hold auth lock through actual dispatch so revoke
         # cannot interleave between the permission check and sending the command.
         with self.auth.lock:
@@ -181,4 +183,7 @@ class Integrations:
                     raise ValueError('已有通话，预览已取消')
             elif not call_id or call_id != self.state.call_id or panel != self.state.panel_id:
                 raise ValueError('会话已变化，操作已取消')
+            if action == 'open' and (self.state.call not in ('early_video', 'audio') or not self.state.allow_open
+                                     or not self.state.relays or (relay is not None and relay not in self.state.relays)):
+                raise ValueError('门口机已不再允许此次开门')
             yield

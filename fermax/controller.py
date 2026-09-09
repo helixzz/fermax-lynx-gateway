@@ -188,7 +188,7 @@ class Controller:
             if purpose == 'open_auto' and not self.state.policy['enabled']:
                 return
             try:
-                with self.state.lock, guard() if guard else nullcontext():
+                with self.state.lock, guard(relay=fields.get('relayName')) if guard else nullcontext():
                     pending = self.client.request(self.client.peers[address], command, fields, response)
                     self.pending_op = (pending, purpose, request_id)
             except (ValueError, OSError, KeyError, TypeError):

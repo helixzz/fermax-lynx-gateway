@@ -1,5 +1,6 @@
 """Loopback-only browser fixture. Does not import or construct a live controller."""
 import copy
+from contextlib import nullcontext
 import datetime
 import io
 import os
@@ -82,7 +83,11 @@ def main():
                 state.allow_open, state.relays = False, []
 
         class FakeController:
-            def enqueue(self, action, panel, request_id, *context):
+            def enqueue(self, action, panel, request_id, *context, guard=None):
+                with state.lock, guard() if guard else nullcontext():
+                    self.execute(action, panel, request_id)
+
+            def execute(self, action, panel, request_id):
                 actions.append(action)
                 if action == 'preview': incoming('outgoing')
                 elif action == 'hangup': end()
