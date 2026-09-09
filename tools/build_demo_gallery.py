@@ -39,6 +39,8 @@ CAPTIONS = {
     'admin-auto-unlimited': ('无时限自动开门 · Unlimited policy', '只提供停止操作，隐藏再次启用和时长选择。'),
     'admin-offline': ('管理页失联 · Unknown policy state', '无法确认服务器状态时隐藏策略操作，恢复后重新读取。'),
     'admin-zoom': ('放大管理页 · 200% layout', '导航自然换行，入口按钮不重叠。'),
+    'admin-integration-pairing': ('连接 Home Assistant · Pairing', '选择入口与独立权限；默认只读，配对需再次验证管理员密码。'),
+    'admin-integration-grants': ('外部系统授权 · Integration grants', '按系统显示已授权入口和权限，可单独撤销。'),
     'admin-settings': ('设置导航 · Settings navigation', '铃声、话机设备、网关配置和密码按任务分区。'),
     'admin-ringtone-library': ('16 首铃声 · Ringtone library', '点击选择并试听，保存后用于下一次来访。'),
     'admin-login': ('管理员登录 · Sign in', '独立的管理员登录入口。'),
@@ -64,8 +66,8 @@ def main():
     for item in images.values():
         if hashlib.sha256((folder/item['file']).read_bytes()).hexdigest() != item['sha256']:
             raise SystemExit('Image hash mismatch: '+item['file'])
-    intro = ('这些 v0.6.3 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
-             'Screenshots show version 0.6.3 using synthetic data.')
+    intro = ('这些 v0.7.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；'
+             'Screenshots show version 0.7.0 using synthetic data.')
     markdown = ['# 界面图集 · Interface gallery', intro,
                 '[中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)',
                 '下载仓库后在浏览器打开 `docs/demo/index.html` 可切换预览，打开 [sound.html](demo/sound.html) 可离线试听 16 首铃声。GitHub 页面可直接浏览以下全部截图。']

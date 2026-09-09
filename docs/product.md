@@ -72,3 +72,12 @@ See incoming visits and confirmed openings at a glance: clear counts for adminis
 The clock takes center stage. Date and activity sit together; connection details live in the controls panel, while important policy and sound conditions remain discoverable.
 
 ![Quiet standby](demo/phone-quiet-auto.webp)
+
+## 与 Home Assistant 直接连接
+
+无需 MQTT，通过一次性配对码授权。默认只读，入口与可选权限分别选择；每个系统都能单独撤销。
+
+[安装与功能说明](home-assistant.md) · [独立 HA 集成](https://github.com/helixzz/ha-fermax-lynx)
+支持手动或 HACS 自定义仓库安装，尚未进入 HACS 默认商店。
+
+![Home Assistant 入口与权限选择，合成示例](demo/admin-integration-pairing.webp)

@@ -180,3 +180,5 @@ An enrolled foreground phone requests a screen wake lock independently of sound 
 Unsupported/insecure pages display the reason instead of claiming success. On iPad, use Settings → Display & Brightness → Auto-Lock → Never, if available. A website cannot change that system setting. Background or manually locked-screen ringing remains unsupported.
 
 Sources: [Safari 16.4](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/), [Safari 18.4](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/), [Wake Lock specification](https://www.w3.org/TR/screen-wake-lock/).
+
+The real loopback browser flow also verifies administrator integration pairing, one-time code redemption, read-only defaults, entrance scope and token revocation. The gallery includes the permission form and authorized-system list; pairing codes and bearer tokens are never captured.

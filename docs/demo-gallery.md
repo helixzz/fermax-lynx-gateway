@@ -1,6 +1,6 @@
 # 界面图集 · Interface gallery
 
-这些 v0.6.3 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show version 0.6.3 using synthetic data.
+这些 v0.7.0 预览由真实界面自动截图生成。住户、入口、视频与音频均为合成示例；Screenshots show version 0.7.0 using synthetic data.
 
 [中文手册](user-guide.zh-CN.md) · [English guide](user-guide.md) · [离线交互图集](demo/index.html)
 
@@ -203,6 +203,18 @@
 导航自然换行，入口按钮不重叠。
 
 ![放大管理页 · 200% layout](demo/admin-zoom.webp)
+
+## 连接 Home Assistant · Pairing
+
+选择入口与独立权限；默认只读，配对需再次验证管理员密码。
+
+![连接 Home Assistant · Pairing](demo/admin-integration-pairing.webp)
+
+## 外部系统授权 · Integration grants
+
+按系统显示已授权入口和权限，可单独撤销。
+
+![外部系统授权 · Integration grants](demo/admin-integration-grants.webp)
 
 ## 设置导航 · Settings navigation
 

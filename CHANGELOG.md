@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0
+
+- Direct Home Assistant integration API, without MQTT or a cloud dependency; independently versioned [HA custom integration](https://github.com/helixzz/ha-fermax-lynx).
+- Administrator integration settings with single-use pairing codes, selected entry panels, explicit permissions and revocation. State/events are the default; camera and controls require opt-in.
+- Stable gateway identity, persistent scoped event cursors, reconnect replay markers and bounded SSE connections. Control requests have per-integration idempotency keys, call binding and expiry checked again before dispatch.
+- Bilingual installation guidance and 45 synthetic screen previews. This release does not add two-way audio, physical door-position sensing or HACS default-store listing.
+
+Upgrade notes: back up the complete state directory, including the event database and new `integrations.json`. Gateway/journal identities are added to the existing database without changing event rows. Resetting the gateway password revokes integration grants and pending pairing codes. Older versions ignore integration metadata and cannot serve the new HA API; HA will be unavailable after a rollback.
+
 ## 0.6.3
 
 - Request foreground phone screen wake lock independently of sound, with stop/retry and accurate support/state feedback.
