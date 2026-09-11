@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+- Recover initial read-only relay/permission discovery after timeout, disconnection or connection failure: at most three connection attempts within twelve seconds after SIP ACK.
+- Isolate each control attempt on a fresh ENet host while preserving keepalive. Clear stale capabilities during recovery and cancel it when the call ends.
+- Add administrator `control_health` state and bounded diagnostic events with phase, reason, attempt and elapsed time. Opening commands and doormatic queries are never replayed.
+
+No configuration or database migration is required; existing automatic-opening policy and HA grants are preserved. Synthetic regression tests do not establish hardware interoperability or explain the first lost/delayed reply in an existing incident.
+
 ## 0.7.0
 
 - Direct Home Assistant integration API, without MQTT or a cloud dependency; independently versioned [HA custom integration](https://github.com/helixzz/ha-fermax-lynx).

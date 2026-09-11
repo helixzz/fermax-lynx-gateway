@@ -12,6 +12,10 @@ class Pending:
     deadline: float
     result: dict | None = None
     error: str | None = None
+    started: float | None = None
+    received: int = 0
+    invalid: int = 0
+    unexpected_responses: int = 0
 
 
 class Transport:
@@ -49,7 +53,8 @@ class Transport:
             raise ValueError('One outstanding request per peer is supported')
         if timeout <= 0:
             raise ValueError('Invalid timeout')
-        pending = Pending(response, time.monotonic()+timeout)
+        now = time.monotonic()
+        pending = Pending(response, now+timeout, started=now)
         self.send(peer, self.codec.command(command, fields))
         self.pending[address] = pending
         return pending
@@ -72,21 +77,27 @@ class Transport:
                 pending.error = 'disconnected'
             output = ('disconnected', event.peer, None)
         elif event.type == enet.EVENT_TYPE_RECEIVE:
+            address = self.address(event.peer)
+            pending = self.pending.get(address)
+            if pending:
+                pending.received += 1
             try:
                 if len(event.packet.data) > 60008:
                     raise ValueError('Message too large')
                 message = self.codec.decode(self.codec.decrypt(event.packet.data))
             except Exception:
                 # Bad legacy input must not crash the service or satisfy a request.
+                if pending:
+                    pending.invalid += 1
                 output = ('invalid', event.peer, None)
             else:
-                address = self.address(event.peer)
-                pending = self.pending.get(address)
                 if pending and time.monotonic() < pending.deadline:
                     body = message.get('[protobuffers.response]', {})
                     if f'[protobuffers.{pending.expected}]' in body:
                         pending.result = body[f'[protobuffers.{pending.expected}]']
                         self.pending.pop(address)
+                    elif body:
+                        pending.unexpected_responses += 1
                 output = ('message', event.peer, message)
         now = time.monotonic()
         for address, pending in list(self.pending.items()):

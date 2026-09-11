@@ -32,7 +32,69 @@ class Controller:
         self.last_keep = 0
         self.keep_pending = None
         self.control_peer = self.keep_peer = None
+        self.control_client = None
+        self.discovery = None
         self.link_checked = 0
+
+    def close_control(self):
+        if self.control_client is not None:
+            self.hosts.remove(self.control_client)
+            self.control_client.close()
+            self.control_client = None
+        self.control_peer = None
+
+    def connect_control(self):
+        # A separate ENet host also isolates old connection events and replies.
+        # Keepalive remains on its existing connection throughout recovery.
+        self.close_control()
+        self.control_client = Transport(self.codec, bind=self.own, allowed=self.panels.values())
+        self.hosts.append(self.control_client)
+        self.control_peer = self.control_client.connect(self.remote, 52102)
+        self.operations.extend([
+            ('panelGetRelaysCommand', {'doormatic':False}, 'panelGetRelaysResponse', 'relays', None),
+            ('panelGetAllowOpenDoorFlagCommand', {'dummy':True}, 'panelGetAllowOpenDoorFlagResponse', 'permission', None),
+        ])
+
+    def control_status(self, status, reason=None, purpose=None, pending=None):
+        with self.state.lock:
+            self.state.control_health = status
+            detail = {'status':status, 'reason':reason, 'purpose':purpose}
+            if pending is not None and pending.started is not None:
+                detail.update(request_ms=round(1000*(time.monotonic()-pending.started)),
+                              received=pending.received, invalid=pending.invalid,
+                              unexpected_responses=pending.unexpected_responses)
+            if self.discovery:
+                detail.update(attempt=self.discovery['attempt'],
+                              elapsed_ms=round(1000*(time.monotonic()-self.discovery['started'])))
+            self.state.event({'connecting':'正在连接门口机控制服务', 'retrying':'正在恢复门口机控制连接',
+                              'ready':'门口机控制查询完成', 'failed':'门口机控制服务不可用'}[status],
+                             'control_health', detail)
+
+    def cancel_control_operations(self):
+        for operation in self.operations:
+            if operation[3].startswith('open'):
+                context = operation[6] if len(operation) > 6 else {}
+                self.state.event('控制连接不可用，操作已取消', 'control_failed',
+                                 {'request_id':operation[4], **context})
+        self.operations.clear()
+
+    def recover_control(self, reason, purpose, pending=None):
+        if pending is None and self.pending_op:
+            pending = self.pending_op[0]
+        self.pending_op = None
+        self.cancel_control_operations()
+        with self.state.lock:
+            self.state.allow_open, self.state.relays = False, []
+        now = time.monotonic()
+        if self.discovery['attempt'] >= 3 or now-self.discovery['started'] >= 12:
+            self.control_status('failed', reason, purpose, pending)
+            self.discovery = None
+            self.close_control()
+            return
+        self.discovery['attempt'] += 1
+        self.discovery['attempt_started'] = now
+        self.connect_control()
+        self.control_status('retrying', reason, purpose, pending)
 
     def enqueue(self, action, panel, request_id, expected_call=None, phone=False, guard=None):
         try:
@@ -48,15 +110,14 @@ class Controller:
         self.auto_attempted = False
         self.operations.clear()
         self.pending_op = None
-        self.control_peer = self.client.connect(remote, 52102)
+        self.discovery = {'attempt':1, 'started':time.monotonic(), 'attempt_started':None}
+        self.connect_control()
         self.keep_peer = self.client.connect(remote, 57703)
         self.last_keep, self.keep_pending = 0, None
         self.video.reset()
         with self.state.lock:
             self.state.panel = self.names[remote]
             self.state.relays, self.state.allow_open = [], False
-        self.operations.append(('panelGetRelaysCommand', {'doormatic':False}, 'panelGetRelaysResponse', 'relays', None))
-        self.operations.append(('panelGetAllowOpenDoorFlagCommand', {'dummy':True}, 'panelGetAllowOpenDoorFlagResponse', 'permission', None))
 
     def notify(self, kind, value):
         with self.state.lock:
@@ -67,6 +128,7 @@ class Controller:
                 self.state.direction = kind
                 self.state.call = 'ringing'
                 self.state.event(('门铃呼入：' if kind == 'incoming' else '正在查看：')+self.names[value], kind)
+                self.control_status('connecting')
             elif kind in ('early_video','audio','ending'):
                 self.state.call = kind
                 if kind == 'ending': self.state.gateway_audio.end()
@@ -81,7 +143,10 @@ class Controller:
                 self.state.allow_open, self.state.relays = False, []
                 self.operations.clear()
                 self.pending_op = self.keep_pending = None
-                for peer in (self.control_peer, self.keep_peer):
+                self.discovery = None
+                self.close_control()
+                self.state.control_health = 'idle'
+                for peer in (self.keep_peer,):
                     if peer is not None:
                         address = self.client.address(peer)
                         self.client.pending.pop(address, None)
@@ -118,6 +183,8 @@ class Controller:
         for host in self.hosts:
             host.close()
         self.sockets, self.hosts = [], []
+        self.control_client = self.control_peer = None
+        self.discovery = None
         self.sip = None
         self.remote = None
         self.operations.clear()
@@ -133,11 +200,12 @@ class Controller:
             self.state.call_id = self.state.panel_id = self.state.direction = None
             self.state.allow_open, self.state.relays = False, []
             self.state.network = 'disconnected'
+            self.state.control_health = 'idle'
         self.video.reset()
 
     def open(self, automatic=False, request_id=None, guard=None):
         with self.state.lock:
-            if not self.sip.dialog or not self.sip.dialog.acked or not self.state.allow_open or not self.state.relays:
+            if self.discovery or not self.sip.dialog or not self.sip.dialog.acked or not self.state.allow_open or not self.state.relays:
                 raise ValueError('门口机尚未允许开门')
             if any(op[3].startswith('open') for op in self.operations) or (self.pending_op and self.pending_op[1].startswith('open')):
                 raise ValueError('开门请求正在处理')
@@ -175,13 +243,41 @@ class Controller:
         now = time.monotonic()
         if not self.sip.dialog or not self.remote or not self.sip.dialog.acked:
             return
+        if self.discovery and self.state.call == 'ending':
+            return
+        if self.discovery:
+            if self.discovery['attempt_started'] is None:
+                self.discovery['started'] = self.discovery['attempt_started'] = now
+            if now-self.discovery['started'] >= 12:
+                self.recover_control('budget_exhausted', 'discovery')
         if self.pending_op:
             pending, purpose, request_id = self.pending_op
             if pending.result is not None or pending.error:
                 self.pending_op = None
-                self.result(purpose, pending, request_id)
+                if self.discovery and pending.error and purpose in ('relays', 'permission'):
+                    self.recover_control(pending.error, purpose, pending)
+                else:
+                    self.result(purpose, pending, request_id)
+                    if self.discovery and purpose == 'permission':
+                        self.control_status('ready')
+                        self.discovery = None
+                    elif pending.error:
+                        # Never replay a command with possible actuation effects,
+                        # including the automatic doormatic relay query.
+                        self.cancel_control_operations()
+                        self.control_status('failed', pending.error, purpose)
+        if self.discovery:
+            address = (self.remote, 52102)
+            if not self.pending_op and address not in self.control_client.peers and now-self.discovery['attempt_started'] >= 3:
+                self.recover_control('connect_timeout', 'discovery')
         address = (self.remote, 52102)
-        if self.operations and not self.pending_op and address in self.client.peers:
+        control = self.control_client
+        if self.state.control_health == 'ready' and (control is None or address not in control.peers):
+            with self.state.lock:
+                self.state.allow_open, self.state.relays = False, []
+            self.cancel_control_operations()
+            self.control_status('failed', 'disconnected', 'control')
+        if control is not None and self.operations and not self.pending_op and address in control.peers:
             operation = self.operations.popleft()
             command, fields, response, purpose, request_id = operation[:5]
             guard = operation[5] if len(operation) > 5 else None
@@ -189,11 +285,13 @@ class Controller:
                 return
             try:
                 with self.state.lock, guard(relay=fields.get('relayName')) if guard else nullcontext():
-                    pending = self.client.request(self.client.peers[address], command, fields, response)
+                    pending = control.request(control.peers[address], command, fields, response)
                     self.pending_op = (pending, purpose, request_id)
             except (ValueError, OSError, KeyError, TypeError):
                 context = operation[6] if len(operation) > 6 else {}
                 self.state.event('集成操作已取消：授权、会话或有效期已变化', 'control_failed', {'request_id': request_id, **context})
+                if self.discovery and purpose in ('relays', 'permission'):
+                    self.recover_control('send_failed', purpose)
         if self.keep_pending and (self.keep_pending.error or self.keep_pending.result is not None):
             if self.keep_pending.error or not self.keep_pending.result.get('state'):
                 self.sip.end('会话保活失败')
@@ -204,7 +302,7 @@ class Controller:
             self.keep_pending = self.client.request(self.client.peers[keep_address], 'sessionKeepAliveCommand', {'dummy':True}, 'sessionKeepAliveResponse')
             self.last_keep = now
         d = self.sip.dialog
-        if d and d.incoming and d.acked and not self.auto_attempted and now-d.created >= 4.4 and self.state.policy['enabled'] and self.state.allow_open and self.state.relays:
+        if d and d.incoming and d.acked and not self.discovery and not self.auto_attempted and now-d.created >= 4.4 and self.state.policy['enabled'] and self.state.allow_open and self.state.relays:
             self.auto_attempted = True
             self.open(True)
 
@@ -242,7 +340,7 @@ class Controller:
                 caps = events.get('[protobuffers.panelCapabilitiesEvent]')
                 if caps and peer.address.host == self.remote:
                     with self.state.lock:
-                        self.state.allow_open = bool(caps.get('openDoorEnable'))
+                        self.state.allow_open = self.state.control_health == 'ready' and bool(caps.get('openDoorEnable'))
                 commands = message.get('[protobuffers.command]', {})
                 if '[protobuffers.sessionKeepAliveCommand]' in commands:
                     host.send(peer, self.codec.envelope('response','sessionKeepAliveResponse',{'state': bool(self.sip.dialog and peer.address.host == self.remote)}))

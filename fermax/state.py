@@ -59,6 +59,7 @@ class State:
         self.controller = None
         self.video_jpeg, self.video_updated = None, 0
         self.notice, self.network = '正在启动门禁通信', 'connecting'
+        self.control_health = 'idle'
         self.clock_status = {'synchronized':False, 'source':'unknown', 'servers':[]}
         if self.path.exists():
             try:
@@ -179,7 +180,7 @@ class State:
     def snapshot(self):
         with self.lock:
             self.tick()
-            return {'mode':'live', 'network':self.network, 'call':self.call, 'panel':self.panel,
+            return {'mode':'live', 'network':self.network, 'control_health':self.control_health, 'call':self.call, 'panel':self.panel,
                     'call_id':self.call_id, 'panel_id':self.panel_id, 'direction':self.direction,
                     'identity':{k:self.config[k] for k in ('building','block','unit','extension')},
                     'panels':[{'id':p['id'],'name':p['name']} for p in self.config['panels']],
