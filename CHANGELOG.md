@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.1 (unreleased)
+## 0.7.1
 
 - Recover initial read-only relay/permission discovery after timeout, disconnection or connection failure: at most three connection attempts within twelve seconds after SIP ACK.
 - Isolate each control attempt on a fresh ENet host while preserving keepalive. Clear stale capabilities during recovery and cancel it when the call ends.
