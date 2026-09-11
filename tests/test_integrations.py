@@ -297,6 +297,7 @@ class IntegrationTests(unittest.TestCase):
                     c.auto_attempted, c.last_keep = True, time.monotonic()
                     c.sip = SimpleNamespace(dialog=SimpleNamespace(acked=True, incoming=True), tick=Mock(), end=Mock())
                     c.client = SimpleNamespace(peers={(c.remote, 52102): object()}, request=Mock())
+                    c.control_client, c.discovery = c.client, None
                     c.link_checked, c.sockets, c.hosts, c.announcer = time.monotonic(), [], [], Mock()
                     self.state.controller = c
                     body = self.control_body()

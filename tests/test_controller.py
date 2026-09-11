@@ -32,6 +32,8 @@ class ControllerTests(unittest.TestCase):
         c.auto_attempted = False
         c.last_keep = time.monotonic()
         c.client = SimpleNamespace(peers={}, request=Mock())
+        c.control_client = c.client
+        c.discovery = None
 
     def test_no_control_or_keepalive_before_sip_ack(self):
         c = self.c
@@ -105,8 +107,10 @@ class ControllerTests(unittest.TestCase):
     def test_ending_removes_stale_peers_before_next_call(self):
         c = self.c
         c.control_peer, c.keep_peer = Mock(), Mock()
-        peers = [c.control_peer, c.keep_peer]
-        c.client.address = lambda peer: (c.remote, 52102 if peer is peers[0] else 57703)
+        peers = [c.keep_peer]
+        control = c.control_client = Mock()
+        c.hosts = [control]
+        c.client.address = lambda peer: (c.remote, 57703)
         c.client.peers = {c.client.address(p):p for p in peers}
         c.client.pending = {address:object() for address in c.client.peers}
         c.video = Mock()
@@ -114,6 +118,8 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(c.client.peers, {})
         self.assertEqual(c.client.pending, {})
         self.assertIsNone(c.control_peer)
+        control.close.assert_called_once()
+        self.assertNotIn(control, c.hosts)
         for peer in peers:
             peer.disconnect_now.assert_called_once()
 

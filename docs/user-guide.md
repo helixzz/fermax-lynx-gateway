@@ -211,3 +211,9 @@ The administrator’s External integrations section groups entrance scope and pe
 After pairing, review each system’s scope and revoke its access separately with administrator confirmation.
 
 ![Paired system with its granted entrance and permissions](demo/admin-integration-grants.webp)
+
+## Calls that wait or cannot open
+
+The administrator journal reports control recovery and unavailable control service. Initial read-only discovery uses at most three connection attempts within twelve seconds after the call is acknowledged. Opening is unavailable during recovery. Successful recovery resumes the existing policy; exhaustion stops further attempts, and call termination clears recovery state.
+
+Opening commands and queries with possible automatic-opening effects are never replayed. An unknown opening outcome requires on-site confirmation. A connected network interface does not establish that the panel's control service is responding. Record the time, entrance and journal privately for diagnosis; automatic recovery does not identify the original cause of a timeout.
