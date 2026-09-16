@@ -30,11 +30,14 @@ class State:
         self.wall, self.mono = wall, mono
         self.folder = Path(folder)
         self.folder.mkdir(parents=True, exist_ok=True)
+        from .diagnostics import Diagnostics
+        self.diagnostics = Diagnostics(self.folder, wall)
         self.config = validate(config or EXAMPLE)
         from .phone_preferences import PhonePreferences
         self.phone_preferences = PhonePreferences(self.folder)
         from .gateway_audio import GatewayAudio
         self.gateway_audio = GatewayAudio(self.folder,self.phone_preferences,mono=mono)
+        self.gateway_audio.diagnostic = self.diagnostics.record
         self.ring_call_id = None
         self.call_started_mono = None
         self.call_ring_preferences = None

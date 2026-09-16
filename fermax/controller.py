@@ -59,7 +59,7 @@ class Controller:
         with self.state.lock:
             self.state.control_health = status
             detail = {'status':status, 'reason':reason, 'purpose':purpose}
-            if pending is not None and pending.started is not None:
+            if pending is not None and getattr(pending,'started',None) is not None:
                 detail.update(request_ms=round(1000*(time.monotonic()-pending.started)),
                               received=pending.received, invalid=pending.invalid,
                               unexpected_responses=pending.unexpected_responses)
@@ -171,8 +171,10 @@ class Controller:
             self.hosts.append(Transport(self.codec, port=port, bind=self.own, allowed=self.panels.values()))
         publisher=Transport(self.codec,bind=self.own,allowed=self.panels.values())
         self.hosts.append(publisher)
-        self.announcer=Announcer(publisher,self.codec,self.state.config,self.state.event)
-        self.sip = Signaling(self.own, self.panels.values(), self.send_sip, self.notify, unit=self.state.config['unit'])
+        self.announcer=Announcer(publisher,self.codec,self.state.config,self.state.event,diagnostic=self.state.diagnostics.record)
+        self.sip = Signaling(self.own, self.panels.values(), self.send_sip, self.notify,
+            unit=self.state.config['unit'], diagnostic=lambda detail:self.state.diagnostics.record('sip',
+                {'call_id':self.state.call_id, **detail}))
         with self.state.lock:
             self.state.network = 'ready'
         self.state.event('门禁网络就绪', 'network_ready', {'ip':self.own})
@@ -196,6 +198,8 @@ class Controller:
                 break
             self.state.event('网络断开，操作已取消', 'control_failed', {'action':action,'request_id':request_id})
         with self.state.lock:
+            if self.state.call_id:
+                self.state.event('网络断开，通话结束', 'call_ended', {'reason':'network_reset'})
             self.state.call, self.state.panel = 'idle', None
             self.state.call_id = self.state.panel_id = self.state.direction = None
             self.state.allow_open, self.state.relays = False, []
@@ -216,6 +220,10 @@ class Controller:
                 self.operations.append(('panelOpenDoorCommand', {'relayName':self.state.relays[0], 'doormatic':False}, 'panelOpenDoorResponse', 'open_manual', request_id, guard, context))
 
     def result(self, purpose, pending, request_id=None):
+        self.state.diagnostics.record('control_result', {'call_id':self.state.call_id,'panel_id':self.state.panel_id,
+            'purpose':purpose,'error':pending.error,'elapsed_ms':round((time.monotonic()-pending.started)*1000) if getattr(pending,'started',None) is not None else None,
+            'received':getattr(pending,'received',None),'invalid':getattr(pending,'invalid',None),'unexpected_responses':getattr(pending,'unexpected_responses',None),
+            'result':pending.result if purpose.startswith('open') else None})
         if pending.error:
             self.state.event('开门结果未知，请现场确认' if purpose.startswith('open') else '门口机请求失败：'+purpose,
                              'open_unknown' if purpose.startswith('open') else 'protocol_error', {'reason':pending.error, 'request_id':request_id})
@@ -237,7 +245,7 @@ class Controller:
             elif purpose.startswith('open'):
                 success = result.get('result') == 'PANEL_OPEN_DOOR_RESULT_OK'
                 name = '自动开门' if purpose == 'open_auto' else '手动开门'
-                self.state.event(name+('成功' if success else '被拒绝'), purpose if success else 'open_denied', result | {'request_id':request_id})
+                self.state.event(name+('：门口机已确认' if success else '被拒绝'), purpose if success else 'open_denied', result | {'request_id':request_id, 'elevator_authorization':'unverified'})
 
     def service_operations(self):
         now = time.monotonic()
@@ -265,7 +273,7 @@ class Controller:
                         # Never replay a command with possible actuation effects,
                         # including the automatic doormatic relay query.
                         self.cancel_control_operations()
-                        self.control_status('failed', pending.error, purpose)
+                        self.control_status('failed', pending.error, purpose, pending)
         if self.discovery:
             address = (self.remote, 52102)
             if not self.pending_op and address not in self.control_client.peers and now-self.discovery['attempt_started'] >= 3:
@@ -285,7 +293,12 @@ class Controller:
                 return
             try:
                 with self.state.lock, guard(relay=fields.get('relayName')) if guard else nullcontext():
-                    pending = control.request(control.peers[address], command, fields, response)
+                    # Allow delayed automatic relay discovery without issuing a second
+                    # application command: doormatic queries may have side effects.
+                    timeout = 8 if purpose == 'auto_relays' else 3
+                    pending = control.request(control.peers[address], command, fields, response, timeout=timeout)
+                    self.state.diagnostics.record('control_sent', {'call_id':self.state.call_id,'panel_id':self.state.panel_id,
+                        'purpose':purpose,'timeout_ms':timeout*1000})
                     self.pending_op = (pending, purpose, request_id)
             except (ValueError, OSError, KeyError, TypeError):
                 context = operation[6] if len(operation) > 6 else {}

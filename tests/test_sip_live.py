@@ -32,6 +32,28 @@ class SIPLiveTests(unittest.TestCase):
         self.now[0] = 17
         self.sip.tick()
         self.assertIsNone(self.sip.dialog)
+        self.assertTrue(SIP.parse(self.out[-1][0]).first.startswith('BYE '))
+
+    def test_local_failure_retires_remote_without_ending_next_visitor(self):
+        self.sip.receive(self.invite,'192.0.2.20')
+        self.sip.dialog.acked = True
+        self.sip.end('Synthetic keepalive failure')
+        bye = SIP.parse(self.out[-1][0])
+        self.assertTrue(bye.first.startswith('BYE '))
+        self.sip.receive(self.invite.replace(b'example-call',b'next-visitor'),'192.0.2.20')
+        headers = {k:bye.headers[k] for k in ('via','from','to','call-id','cseq')}
+        self.sip.receive(wire('SIP/2.0 200 OK',headers),'192.0.2.20')
+        self.assertEqual(self.sip.dialog.cid,'next-visitor')
+        self.assertNotIn('example-call',self.sip.cleanup)
+
+    def test_diagnostics_record_rejected_invites_without_raw_headers(self):
+        records=[]
+        self.sip.diagnostic=records.append
+        self.sip.receive(self.invite,'192.0.2.20')
+        self.sip.receive(self.invite.replace(b'example-call',b'other-call'),'192.0.2.20')
+        self.assertEqual(records[-1]['status'],486)
+        self.assertNotIn('example-call',json.dumps(records))
+        self.assertFalse(any('body' in r or 'headers' in r for r in records))
 
     def test_preview_200_ack_and_bye(self):
         self.sip.preview('192.0.2.20')

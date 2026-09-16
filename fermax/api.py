@@ -98,7 +98,8 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 self.send_header('X-Content-Type-Options', 'nosniff')
                 self.end_headers()
                 self.close_connection = True
-                previous, last_send = None, 0
+                previous, last_send, previous_call = None, 0, None
+                state.diagnostics.record('phone_stream', {'device_id':device['id'],'stage':'connected'})
                 while not result.stopping.is_set():
                     # Revocation also closes existing streams; never trust admission alone.
                     try:
@@ -119,11 +120,17 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                         data = json.dumps(body, ensure_ascii=False, separators=(',',':'))
                         self.wfile.write(f'id: {cursor}\nevent: {kind}\ndata: {data}\n\n'.encode())
                         self.wfile.flush()
+                        visit = body['state']['call_id']
+                        if visit != previous_call:
+                            state.diagnostics.record('phone_stream', {'device_id':device['id'], 'stage':'call_sent',
+                                'call_id':visit, 'call':body['state']['call']})
+                            previous_call = visit
                         previous, last_send = cursor, now
                     result.stopping.wait(0.5)
             except (OSError, TimeoutError):
                 pass
             finally:
+                state.diagnostics.record('phone_stream', {'device_id':device['id'],'stage':'disconnected'})
                 state.stream_slots.release()
 
         def phone_get(self, path):
@@ -321,6 +328,10 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                         image = state.video_jpeg
                         fresh = state.mono()-state.video_updated < 5
                     self.send(200, image, 'image/jpeg') if image and fresh else self.send(404, {'error':'暂无视频帧'})
+                elif path == '/v1/diagnostics':
+                    args = parse_qs(urlsplit(self.path).query)
+                    rows = state.diagnostics.logs(args.get('before',[None])[0], args.get('limit',[100])[0])
+                    self.send(200, {'events':rows,'next_before':rows[-1]['id'] if rows else None})
                 elif path == '/v1/logs':
                     args = parse_qs(urlsplit(self.path).query)
                     rows = state.logs(args.get('before',[None])[0], args.get('limit',[100])[0], args.get('kind',[None])[0])
@@ -347,7 +358,7 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                     self.send(404, {'error':'Not found'})
             except (ValueError, TypeError):
                 self.send(400, {'error':'查询参数无效'})
-            except (BrokenPipeError, ConnectionResetError):
+            except ConnectionError:
                 pass
 
         def do_POST(self):
@@ -392,6 +403,25 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 if self.path == '/v1/phone/session/logout':
                     devices.revoke_grant(self.cookie('fermax_device'))
                     return self.send(200, {'ok':True}, extra={'Set-Cookie':self.phone_cookies(clear=True)})
+                if self.path == '/v1/phone/diagnostics':
+                    device = self.phone_device()
+                    if not device: return
+                    event = data.get('event')
+                    if event not in ('call_rendered','call_cleared','stream_error','ring_requested','ring_started','ring_failed','visibility','fallback_snapshot'):
+                        raise ValueError('Unknown diagnostic event')
+                    if any(type(data.get(k)) is not bool for k in ('visible','online','sound_enabled','muted')):
+                        raise ValueError('Invalid diagnostic flags')
+                    if type(data.get('volume')) is not int or not 0 <= data['volume'] <= 100:
+                        raise ValueError('Invalid volume')
+                    with state.lock:
+                        call = data.get('call_id')
+                        if call is not None and (call != state.call_id or state.panel_id not in device['panels']):
+                            return self.send(200, {'recorded':False})
+                        detail = {k:data[k] for k in ('visible','online','sound_enabled','muted','volume')}
+                        detail.update(event=event, call_id=call, device_id=device['id'])
+                        recorded = state.diagnostics.record('phone_client',detail,
+                            rate_key=('phone',device['id'],event),interval=2)
+                    return self.send(200, {'recorded':recorded})
                 if self.path == '/v1/phone/control':
                     device = self.phone_device()
                     if not device:
@@ -472,6 +502,10 @@ def server(state, auth, address=('127.0.0.1', 8765)):
                 else:
                     return self.send(404, {'error':'Not found'})
                 self.send(200, state.snapshot())
+            except ConnectionError:
+                # A phone may navigate/reconnect while a diagnostic POST completes.
+                # Do not try to write an error response to the same closed socket.
+                return
             except PermissionError as error:
                 self.send(403, {'error':str(error)})
             except OSError:
