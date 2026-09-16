@@ -6,6 +6,7 @@
   let retryTimer, renewTimer, hideTimer, attempt = 0, lastMessage = 0, cursor = '';
   let epoch = '', version = -1, wall = 0, sampledAt = 0, imageURL = null, frameBusy = false;
   let authorizationRetry = false;
+  let fallbackBusy = false;
   let lastAutoResult = 0;
   const sound = new window.LynxSound(), clock = new window.LynxClock();
   let mutedCall = null, currentCall = null, pending = null, wakeLock = null;
@@ -49,13 +50,20 @@
   icon($('#open'),'door','开门');
   icon($('#showControls'),'settings','显示话机操作面板',true);
 
-  function message(text, transient=false) { clearTimeout(messageTimer); $('#message').textContent = text; if (transient) messageTimer = setTimeout(() => { $('#message').textContent = ''; },4000); }
-  async function request(path, data) {
+  function message(text, transient=true) { clearTimeout(messageTimer); $('#message').textContent = text; if (transient && text) messageTimer = setTimeout(() => { $('#message').textContent = ''; },4000); }
+  function diagnostic(event) {
+    // Fixed metadata only. Failed reports are discarded, never queued for replay.
+    if (stopped || pageLeaving) return;
+    request('/v1/phone/diagnostics', {event,call_id:state && state.call_id,
+      visible:!document.hidden,online,sound_enabled:!!sound.enabled,
+      muted:!!(state && mutedCall === state.call_id),volume:Number($('#volume').value)},true).catch(()=>{});
+  }
+  async function request(path, data, keepalive=false) {
     const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 10000);
     try {
       const response = await fetch(path, {method:data === undefined ? 'GET' : 'POST',
         headers:data === undefined ? {} : {'Content-Type':'application/json'},
-        body:data === undefined ? undefined : JSON.stringify(data), signal:abort.signal, cache:'no-store'});
+        body:data === undefined ? undefined : JSON.stringify(data), signal:abort.signal, cache:'no-store',keepalive});
       const body = await response.json();
       if (!response.ok) { const error = Error(body.error || '连接失败'); error.status = response.status; throw error; }
       return body;
@@ -149,6 +157,7 @@
     const preferences = state.phone_preferences || {ringtone:'chime',ring_seconds:30};
     $('#ringSetting').textContent = (ringNames[preferences.ringtone] || '清脆门铃')+' · 最长响铃 '+preferences.ring_seconds+' 秒';
     if (currentCall !== state.call_id) {
+      diagnostic(active ? 'call_rendered' : 'call_cleared');
       sound.stop(); ringStartedFor = null;
       currentCall = state.call_id; mutedCall = null; ringPlan = Object.assign({},state.ring_preferences || preferences); clearPicture();
       try { if (sessionStorage.getItem('lynx-muted-call') === currentCall) mutedCall = currentCall; } catch (_) {}
@@ -185,7 +194,7 @@
           ['call_ended','control_failed'].includes(event.kind)));
       if (outcome) { message(eventNames[outcome.kind]); pending = null; }
     }
-    if (state.call === 'busy') message('另一个未授权门口机的会话正在进行，请稍候。');
+    if (state.call === 'busy' && !$('#message').textContent) message('另一个未授权门口机的会话正在进行，请稍候。');
     buttons(); updateClock(); ring(); keepAwake();
   }
   async function setup(text) {
@@ -211,7 +220,7 @@
   }
   async function connect(run) {
     const abort = new AbortController(); stream = abort;
-    const firstSnapshotTimeout = setTimeout(() => abort.abort(), 45000);
+    const firstSnapshotTimeout = setTimeout(() => abort.abort(), 20000);
     let renewedSession = false;
     try {
       const renewed = await request('/v1/phone/session', {});
@@ -242,6 +251,7 @@
     } catch (error) {
       if (run !== generation) return;
       abort.abort(); clearTimeout(renewTimer);
+      diagnostic('stream_error');
       if (error.status === 401 && renewedSession && !authorizationRetry) {
         authorizationRetry = true; offline('正在恢复设备会话'); reconnect(1000); return;
       }
@@ -272,6 +282,19 @@
       imageURL = next; if (previous) URL.revokeObjectURL(previous);
     } catch (_) { if (run === generation) { clearPicture(); $('#pictureHint').hidden = false; $('#pictureHint').textContent = '视频暂停，正在等待新画面'; } }
     finally { clearTimeout(timeout); frameBusy = false; }
+  }
+  async function fallbackSnapshot() {
+    // A stalled stream must not hide an entire short auto-open visit. This is
+    // read-only recovery, never a replay of a control or an old incoming event.
+    if (stopped || document.hidden || fallbackBusy || (online && performance.now()-lastMessage < 18000)) return;
+    fallbackBusy = true;
+    const run = generation;
+    try {
+      const snapshot = await request('/v1/phone/state');
+      if (run !== generation || stopped || document.hidden) return;
+      render(snapshot); diagnostic('fallback_snapshot'); reconnect();
+    } catch (_) { /* The stream's renewal/retry path owns authorization recovery. */ }
+    finally { fallbackBusy = false; }
   }
   async function control(action, panel=null) {
     if (!online || !state || pending) return;
@@ -304,8 +327,10 @@
     if (!eligible || remaining <= 0 || !volume) { if (sound.mode === 'call') sound.stop(); return; }
     if (ringStartedFor === state.call_id) return;
     const call = state.call_id; ringStartedFor = call;
-    sound.play(ringPlan,remaining,volume).catch(() => {
+    diagnostic('ring_requested');
+    sound.play(ringPlan,remaining,volume).then(()=>{if(state && state.call_id === call) diagnostic('ring_started');}).catch(() => {
       if (!online || !state || state.call_id !== call || mutedCall === call || !Number($('#volume').value) || ringRemaining() <= 0) return;
+      diagnostic('ring_failed');
       message('自定义音乐暂不可用，已改用清脆门铃。');
       sound.play({ringtone:'chime'},ringRemaining(),volume).catch(() => { if (!online || !state || state.call_id !== call || mutedCall === call || ringRemaining() <= 0) return; soundFailed=true; attention(); message('铃声无法播放，请轻触启用并检查设备音量。'); });
     });
@@ -440,6 +465,7 @@
   });
   function resume() { if (!document.hidden && !stopped) { offline('正在恢复连接'); reconnect(); wakeBlocked=false; keepAwake(); } }
   document.addEventListener('visibilitychange', () => {
+    diagnostic('visibility');
     if (document.hidden) { releaseWake('页面已暂停，返回前台后重新申请保持亮屏。'); ++generation; if (stream) stream.abort(); clearTimeout(retryTimer); clearTimeout(renewTimer); offline('页面已暂停'); }
     else resume();
   });
@@ -454,5 +480,6 @@
   if(window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(updateClock)).observe($('#clockFace'));
   window.addEventListener('resize',updateClock);
   setInterval(frame, 1000);
+  setInterval(fallbackSnapshot, 5000);
   hideControls(false); reconnect();
 })();

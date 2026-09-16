@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.2
+
+- Expire phone operation notices after four seconds. Recover stalled foreground state streams with read-only snapshots, so a short visit need not wait for the former 45-second watchdog.
+- Give the automatic relay query eight seconds to complete, without replaying this query or opening commands. Locally failed SIP dialogs send bounded BYE cleanup independently of subsequent visitors.
+- Add local, administrator-only diagnostics for SIP rejection/termination, control timing, phone delivery/rendering and gateway/browser ringing. Retain at most 10,000 records for seven days, separately from the permanent event journal; no raw packets, credentials or media are recorded.
+- Opening confirmation explicitly leaves elevator authorization unverified. The existing protocol response cannot prove downstream elevator or physical lock state.
+
+Existing policy, device grants and sound settings are preserved. Diagnostics help investigate intermittent field failures; this release does not establish their root cause or guarantee elevator authorization. Refresh open phone pages after upgrading.
+
 ## 0.7.1
 
 - Recover initial read-only relay/permission discovery after timeout, disconnection or connection failure: at most three connection attempts within twelve seconds after SIP ACK.

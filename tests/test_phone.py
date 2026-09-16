@@ -270,3 +270,21 @@ class PhoneTests(unittest.TestCase):
         self.assertTrue(all('Max-Age=0' in value for value in cookies))
         self.assertIsNone(self.devices.authorized(session))
         self.assertIsNone(self.devices.renew(grant))
+
+    def test_client_diagnostics_are_scoped_bounded_and_admin_read_only(self):
+        self.serve()
+        _,session,_=self.grant()
+        cookie='fermax_phone='+session
+        data={'event':'call_rendered','call_id':'synthetic','visible':True,'online':True,
+              'sound_enabled':False,'muted':False,'volume':50,'secret':'must-not-be-stored'}
+        self.assertEqual(self.request('POST','/v1/phone/diagnostics',data)[0],401)
+        self.state.call_id,self.state.panel_id='synthetic','other'
+        self.assertFalse(json.loads(self.request('POST','/v1/phone/diagnostics',data,cookie)[1])['recorded'])
+        self.state.panel_id=self.allowed
+        self.assertTrue(json.loads(self.request('POST','/v1/phone/diagnostics',data,cookie)[1])['recorded'])
+        self.assertFalse(json.loads(self.request('POST','/v1/phone/diagnostics',data,cookie)[1])['recorded'])
+        self.assertEqual(self.request('GET','/v1/diagnostics',cookie=cookie)[0],401)
+        code,body,_=self.request('GET','/v1/diagnostics',cookie='fermax='+self.auth.login(PASSWORD))
+        self.assertEqual(code,200)
+        self.assertNotIn(b'must-not-be-stored',body)
+        self.assertEqual(len(json.loads(body)['events']),1)

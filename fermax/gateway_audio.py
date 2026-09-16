@@ -144,6 +144,11 @@ class GatewayAudio:
         self.faults = {}
         self.stopping, self.wake = threading.Event(), threading.Event()
         self.thread = None
+        self.diagnostic = lambda *args, **kwargs: None
+
+    def report(self, stage, job=None, **detail):
+        self.diagnostic('gateway_audio', {'stage':stage, 'call_id':job['id'] if job and not job['test'] else None,
+            'test':bool(job and job['test']), **detail})
 
     @staticmethod
     def validate(value):
@@ -181,6 +186,8 @@ class GatewayAudio:
             self.desired = None
             if self.value['enabled']:
                 self.desired = {'id':call_id,'music':dict(settings),'deadline':started+settings['ring_seconds'],'test':False,'settings':dict(self.value)}
+            self.diagnostic('gateway_audio', {'stage':'requested' if self.desired else 'disabled',
+                'call_id':call_id,'volume':self.value['volume'],'ring_seconds':settings['ring_seconds']})
             self.wake.set()
 
     def end(self):
@@ -229,7 +236,9 @@ class GatewayAudio:
 
     def play(self, job):
         tried = set()
+        started = self.mono()
         pcm,rate,channels = self.phrase(job['music'])
+        self.report('prepared',job,elapsed_ms=round((self.mono()-started)*1000))
         volume = job['settings']['volume']/100
         samples = array.array('h'); samples.frombytes(pcm)
         if sys.byteorder!='little': samples.byteswap()
@@ -239,7 +248,10 @@ class GatewayAudio:
         while self.live(job):
             devices = candidates(self.scan(),job['settings']['output'])
             device = next((d for d in devices if d['id'] not in tried),None)
-            if not device or len(tried)>=8: self.status='没有可用输出，请连接扬声器或检查权限/占用'; return
+            if not device or len(tried)>=8:
+                self.status='没有可用输出，请连接扬声器或检查权限/占用'
+                self.report('no_output',job)
+                return
             tried.add(device['id'])
             # Bounded input; process deadline also enforces time spent opening/draining.
             size = max(0,int((job['deadline']-self.mono())*rate))*channels*2
@@ -247,6 +259,8 @@ class GatewayAudio:
             payload = (pcm*(size//len(pcm)+1))[:size]
             try:
                 self.player.start(device,payload,rate,channels)
+                self.report('started',job,output_kind=device['kind'],volume=job['settings']['volume'],
+                    remaining_ms=round((job['deadline']-self.mono())*1000))
                 self.actual = {k:v for k,v in device.items() if k!='pcm'}
                 self.status = ('测试声音' if job['test'] else '呼入响铃')+' · '+device['name']
                 if len(tried)>1 or (job['settings']['output']!='auto' and device['id']!=job['settings']['output']): self.status += '（已降级）'
@@ -260,9 +274,11 @@ class GatewayAudio:
                 if not self.live(job): return
                 with self.guard: self.faults[device['id']]='播放结束过早：检查连接、权限或设备占用'
                 logging.warning('Gateway audio output ended early or disconnected (%s)',device['kind'])
+                self.report('ended_early',job,output_kind=device['kind'],exit_code=self.player.poll())
             except OSError:
                 with self.guard: self.faults[device['id']]='无法启动播放：检查 alsa-utils、权限或设备占用'
                 logging.warning('Gateway audio output unavailable (%s)',device['kind'])
+                self.report('output_error',job,output_kind=device['kind'])
             finally:
                 self.player.stop(); self.actual = None
 
@@ -287,7 +303,9 @@ class GatewayAudio:
                     except Exception:
                         self.status='音乐播放失败，请检查音频设置'
                         logging.warning('Gateway ringtone could not be prepared or played')
+                        self.report('failed',job)
                     finally:
+                        self.report('finished',job,reason='deadline' if self.mono()>=job['deadline'] else 'stopped_or_unavailable')
                         with self.guard:
                             if self.desired is job: self.desired = None
                 self.wake.wait(.05); self.wake.clear()

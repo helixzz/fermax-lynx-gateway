@@ -139,6 +139,7 @@ def main():
                 elif command == 'network_down': state.network = 'disconnected'
                 elif command == 'network_up': state.network = 'ready'
                 elif command == 'auto': state.set_auto(0)
+                elif command == 'auto_open': state.event('Synthetic automatic confirmation','open_auto')
                 elif command == 'auto_off': state.set_auto(None)
                 elif command == 'auto_expire':
                     state.deadline = state.mono()-1

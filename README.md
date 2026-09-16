@@ -136,3 +136,5 @@ or endorsed by their owners.
 时钟、日期与今日活动集中呈现，连接详情收进操作面板；自动开门、铃声异常与断线保留明确提示。轻触空白或右下角图标即可操作。[查看界面与手册](docs/user-guide.zh-CN.md#安静待机)。
 
 ![安静待机](docs/demo/phone-quiet-auto.webp)
+
+通话、网页漏显或响铃故障排查见 [诊断说明 / Call diagnostics](docs/diagnostics.md)。

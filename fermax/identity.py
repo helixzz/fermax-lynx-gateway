@@ -3,12 +3,13 @@ import time
 
 
 class Announcer:
-    def __init__(self,transport,codec,config,notify,clock=time.monotonic):
+    def __init__(self,transport,codec,config,notify,clock=time.monotonic,diagnostic=None):
         self.transport,self.codec,self.config,self.notify=transport,codec,config,notify
         self.clock=clock
         self.next_due=0
         self.waiting={}
         self.reported=set()
+        self.diagnostic=diagnostic or (lambda *args, **kwargs:None)
 
     def fields(self):
         address={'ip_address':self.config['monitor_ip'],'protocol':'LYNX','delete':False}
@@ -30,6 +31,7 @@ class Announcer:
             if address in self.transport.peers:
                 self.transport.send(self.transport.peers[address],self.codec.envelope('event','notifyIPProtocolEvent',self.fields()))
                 self.waiting.pop(address)
+                self.diagnostic('identity_sent',{'panel':address[0],'connected':True},rate_key=('identity',address[0]),interval=900)
                 if address not in self.reported:
                     self.reported.add(address)
                     self.notify('本户 LYNX 身份公告已发送','identity_announced',{'panel':address[0]})

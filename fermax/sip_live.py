@@ -1,5 +1,6 @@
 """Observed LYNX SIP profile with bounded UDP transactions and one dialog."""
 import re
+import hashlib
 import time
 import uuid
 from dataclasses import dataclass
@@ -31,7 +32,7 @@ class Dialog:
 
 
 class Signaling:
-    def __init__(self, own, panels, send, notify, clock=time.monotonic, unit=''):
+    def __init__(self, own, panels, send, notify, clock=time.monotonic, unit='', diagnostic=None):
         self.own, self.panels = own, set(panels)
         self.send, self.notify, self.clock = send, notify, clock
         self.user_agent = (unit+' ' if unit else '')+'FermaxGateway'
@@ -41,6 +42,12 @@ class Signaling:
         self.ack_response = None
         self.invites = {}
         self.cleanup = {}
+        self.diagnostic = diagnostic or (lambda detail: None)
+
+    def trace(self, stage, sip=None, remote=None, **detail):
+        cid = sip.headers.get('call-id','') if sip else self.dialog.cid if self.dialog else ''
+        self.diagnostic({'stage':stage,'remote':remote or (self.dialog.remote if self.dialog else None),
+            'sip_call':hashlib.sha256(cid.encode()).hexdigest()[:16] if cid else None, **detail})
 
     def sdp(self, audio=False):
         session = int(time.time())+2208988800
@@ -58,6 +65,8 @@ class Signaling:
             headers['Content-Type'] = 'application/sdp'
         result = wire(f'SIP/2.0 {status} {reason}', headers, body)
         self.send(result, remote)
+        if status >= 200:
+            self.trace('response',sip,remote,status=status)
         return result
 
     def request(self, method, body='', initial=False, seq=None):
@@ -78,6 +87,7 @@ class Signaling:
         uri = f'sip:{d.remote}' if initial else f'sip:{d.remote}:5060'
         request = wire(f'{method} {uri} SIP/2.0', headers, body)
         self.send(request, d.remote)
+        self.trace('sent',method=method,sequence=seq)
         if method != 'ACK':
             self.pending = {'wire':request,'seq':str(seq),'method':method,'next':self.clock()+0.5,
                             'delay':0.5,'deadline':self.clock()+16,'provisional':False}
@@ -112,6 +122,7 @@ class Signaling:
         self.notify('ending', self.dialog.remote)
 
     def end(self, reason):
+        self.trace('ended',reason=reason)
         remote = self.dialog.remote if self.dialog else None
         if self.dialog:
             for (cid,seq), invite in self.invites.items():
@@ -126,6 +137,13 @@ class Signaling:
                 self.send(data,remote)
                 self.cleanup[self.dialog.cid] = {'wire':data,'remote':remote,'seq':self.pending['seq'],
                     'method':'CANCEL','deadline':self.clock()+16,'next':self.clock()+.5,'delay':.5}
+            elif self.dialog.phase != 'ringing' and not reason.startswith(('BYE','CANCEL')) and not (self.pending and self.pending['method']=='BYE'):
+                # A local failure must retire the remote dialog too. Keep cleanup
+                # independent so its response cannot tear down the next visitor.
+                d = self.dialog
+                data = self.request('BYE','reason:1')
+                self.cleanup[d.cid] = {'wire':data,'remote':remote,'seq':str(d.seq),
+                    'method':'BYE','deadline':self.clock()+16,'next':self.clock()+.5,'delay':.5}
         self.dialog, self.pending, self.ack_response = None, None, None
         self.notify('ended', {'remote':remote,'reason':reason})
 
@@ -164,6 +182,8 @@ class Signaling:
         method = sip.first.split()[0]
         cid = sip.headers['call-id']
         seq, cseq_method = sip.headers['cseq'].split()
+        self.trace('received',sip,remote,method=method if method in ('INVITE','ACK','BYE','CANCEL','OPTIONS','SIP/2.0') else 'other',
+            sequence=int(seq) if seq.isdecimal() and len(seq)<12 else None)
         if method=='SIP/2.0' and self.retired_response(sip,remote,cid,seq,cseq_method):
             return
         cache_key = (remote, cid, sip.headers.get('via'), sip.headers['cseq'])

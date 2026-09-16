@@ -195,6 +195,29 @@ class RecoveryTests(unittest.TestCase):
                 self.assertFalse(self.state.allow_open)
                 self.assertEqual(self.state.control_health, 'failed')
 
+    def test_slow_auto_query_waits_once_without_reissuing_command(self):
+        c = self.c
+        self.state.set_auto(0)
+        transport = self.connected()
+        c.service_operations()
+        self.reply({'relayTags':['synthetic-relay']})
+        self.reply({'allowOpenDoor':True})
+        c.service_operations()
+        self.assertEqual(c.pending_op[1],'auto_relays')
+        pending=c.pending_op[0]
+        self.assertEqual(pending.deadline-self.now,8)
+        sent=transport.send.call_count
+        self.now+=5
+        transport.poll()
+        c.service_operations()
+        self.assertIsNone(pending.error)
+        self.assertEqual(transport.send.call_count,sent)
+        self.reply({'relayTags':['synthetic-relay']})
+        self.assertEqual(c.pending_op[1],'open_auto')
+        self.reply({'result':'PANEL_OPEN_DOOR_RESULT_OK'})
+        c.service_operations()
+        self.assertEqual(transport.send.call_count,sent+1)
+
     def test_open_cannot_enter_queue_during_discovery(self):
         self.state.allow_open, self.state.relays = True, ['synthetic-relay']
         with self.assertRaises(ValueError):

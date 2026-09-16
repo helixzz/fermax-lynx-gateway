@@ -67,6 +67,21 @@ class GatewayAudioTests(unittest.TestCase):
         self.assertEqual(len(self.player.starts),1)
         self.audio.end();wait(lambda:self.player.active is None)
         self.assertEqual(self.player.stops,1)
+
+    def test_auto_visit_rings_and_records_lifecycle_without_phone(self):
+        records=[]
+        self.audio.diagnostic=lambda kind,detail:records.append(detail)
+        self.state.set_auto(0)
+        self.state.call_id='synthetic-auto'
+        self.audio.start()
+        self.state.event('Synthetic visitor','incoming')
+        wait(lambda:self.player.active)
+        self.state.event('Synthetic auto confirmation','open_auto')
+        self.assertIsNotNone(self.player.active)
+        self.state.event('Synthetic end','call_ended')
+        wait(lambda:any(r['stage']=='finished' for r in records))
+        self.assertEqual([r['stage'] for r in records],['requested','prepared','started','finished'])
+        self.assertTrue(all(r['call_id']=='synthetic-auto' for r in records))
     def test_disable_and_reenable_cannot_restart_visit(self):
         self.audio.start();self.audio.call('visit',MUSIC,time.monotonic());wait(lambda:self.player.active)
         self.audio.update(dict(self.audio.value,enabled=False));wait(lambda:not self.player.active)
