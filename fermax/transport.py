@@ -1,7 +1,8 @@
 """Single-threaded ENet transport with explicitly configured peer addresses."""
 import ipaddress
 import time
-from dataclasses import dataclass
+import uuid
+from dataclasses import dataclass, field
 
 import enet
 
@@ -16,6 +17,7 @@ class Pending:
     received: int = 0
     invalid: int = 0
     unexpected_responses: int = 0
+    diagnostic_id: str = field(default_factory=lambda: uuid.uuid4().hex)
 
 
 class Transport:

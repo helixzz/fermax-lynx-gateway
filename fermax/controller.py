@@ -13,6 +13,7 @@ from .media import Video
 from .sip_live import Signaling
 from .transport import Transport
 from .identity import Announcer
+from .control_trace import CallTrace, semantics
 
 class Controller:
     def __init__(self, state, codec):
@@ -35,6 +36,11 @@ class Controller:
         self.control_client = None
         self.discovery = None
         self.link_checked = 0
+
+    def trace(self):
+        if not hasattr(self, "call_trace"):
+            self.call_trace = CallTrace(self.state)
+        return self.call_trace
 
     def close_control(self):
         if self.control_client is not None:
@@ -106,6 +112,7 @@ class Controller:
         self.sockets[0].sendto(self.codec.encrypt(data), (remote, 5060))
 
     def begin(self, remote):
+        self.call_trace = CallTrace(self.state)
         self.remote = remote
         self.auto_attempted = False
         self.operations.clear()
@@ -137,6 +144,7 @@ class Controller:
                 elif kind == 'early_video':
                     self.state.event('视频会话已建立', 'video_session')
             elif kind == 'ended':
+                self.trace().summary('ended', force=True)
                 self.state.event('通话结束', 'call_ended', value)
                 self.state.call, self.state.panel = 'idle', None
                 self.state.call_id = self.state.panel_id = self.state.direction = None
@@ -199,6 +207,7 @@ class Controller:
             self.state.event('网络断开，操作已取消', 'control_failed', {'action':action,'request_id':request_id})
         with self.state.lock:
             if self.state.call_id:
+                self.trace().summary('network_reset', force=True)
                 self.state.event('网络断开，通话结束', 'call_ended', {'reason':'network_reset'})
             self.state.call, self.state.panel = 'idle', None
             self.state.call_id = self.state.panel_id = self.state.direction = None
@@ -219,11 +228,16 @@ class Controller:
                 context = {'call_id': self.state.call_id, 'panel_id': self.state.panel_id}
                 self.operations.append(('panelOpenDoorCommand', {'relayName':self.state.relays[0], 'doormatic':False}, 'panelOpenDoorResponse', 'open_manual', request_id, guard, context))
 
-    def result(self, purpose, pending, request_id=None):
+    def trace_result(self, purpose, pending):
         self.state.diagnostics.record('control_result', {'call_id':self.state.call_id,'panel_id':self.state.panel_id,
             'purpose':purpose,'error':pending.error,'elapsed_ms':round((time.monotonic()-pending.started)*1000) if getattr(pending,'started',None) is not None else None,
             'received':getattr(pending,'received',None),'invalid':getattr(pending,'invalid',None),'unexpected_responses':getattr(pending,'unexpected_responses',None),
-            'result':pending.result if purpose.startswith('open') else None})
+            'transaction_id':getattr(pending, 'diagnostic_id', None),
+            'response_fields':semantics(pending.result),
+            'result':semantics(pending.result) if purpose.startswith('open') else None})
+
+    def result(self, purpose, pending, request_id=None):
+        self.trace_result(purpose, pending)
         if pending.error:
             self.state.event('开门结果未知，请现场确认' if purpose.startswith('open') else '门口机请求失败：'+purpose,
                              'open_unknown' if purpose.startswith('open') else 'protocol_error', {'reason':pending.error, 'request_id':request_id})
@@ -263,6 +277,7 @@ class Controller:
             if pending.result is not None or pending.error:
                 self.pending_op = None
                 if self.discovery and pending.error and purpose in ('relays', 'permission'):
+                    self.trace_result(purpose, pending)
                     self.recover_control(pending.error, purpose, pending)
                 else:
                     self.result(purpose, pending, request_id)
@@ -296,9 +311,15 @@ class Controller:
                     # Allow delayed automatic relay discovery without issuing a second
                     # application command: doormatic queries may have side effects.
                     timeout = 8 if purpose == 'auto_relays' else 3
+                    if purpose.startswith('open'):
+                        self.trace().summary('before_open', force=True)
                     pending = control.request(control.peers[address], command, fields, response, timeout=timeout)
                     self.state.diagnostics.record('control_sent', {'call_id':self.state.call_id,'panel_id':self.state.panel_id,
-                        'purpose':purpose,'timeout_ms':timeout*1000})
+                        'purpose':purpose,'timeout_ms':timeout*1000,
+                        'transaction_id':getattr(pending, 'diagnostic_id', None),
+                        'request_fields':semantics(fields), 'acked':bool(self.sip.dialog.acked),
+                        'allow_open':bool(self.state.allow_open), 'control_health':self.state.control_health,
+                        'dialog_age_ms':round((time.monotonic()-self.sip.dialog.created)*1000)})
                     self.pending_op = (pending, purpose, request_id)
             except (ValueError, OSError, KeyError, TypeError):
                 context = operation[6] if len(operation) > 6 else {}
@@ -306,6 +327,7 @@ class Controller:
                 if self.discovery and purpose in ('relays', 'permission'):
                     self.recover_control('send_failed', purpose)
         if self.keep_pending and (self.keep_pending.error or self.keep_pending.result is not None):
+            self.trace().keep_result(self.keep_pending)
             if self.keep_pending.error or not self.keep_pending.result.get('state'):
                 self.sip.end('会话保活失败')
                 return
@@ -313,6 +335,7 @@ class Controller:
         keep_address = (self.remote, 57703)
         if not self.keep_pending and now-self.last_keep >= 1 and keep_address in self.client.peers:
             self.keep_pending = self.client.request(self.client.peers[keep_address], 'sessionKeepAliveCommand', {'dummy':True}, 'sessionKeepAliveResponse')
+            self.trace().sent += 1
             self.last_keep = now
         d = self.sip.dialog
         if d and d.incoming and d.acked and not self.discovery and not self.auto_attempted and now-d.created >= 4.4 and self.state.policy['enabled'] and self.state.allow_open and self.state.relays:
@@ -346,6 +369,8 @@ class Controller:
                 event = host.poll()
                 if not event:
                     break
+                if event[0] in ('connected', 'disconnected', 'invalid') and self.remote and host.address(event[1])[0] == self.remote:
+                    self.trace().record('session_transport', {'stage':event[0], 'port':host.address(event[1])[1]})
                 if event[0] != 'message':
                     continue
                 _, peer, message = event
@@ -354,8 +379,11 @@ class Controller:
                 if caps and peer.address.host == self.remote:
                     with self.state.lock:
                         self.state.allow_open = self.state.control_health == 'ready' and bool(caps.get('openDoorEnable'))
+                        self.trace().capability(caps, self.state.allow_open)
                 commands = message.get('[protobuffers.command]', {})
                 if '[protobuffers.sessionKeepAliveCommand]' in commands:
+                    if self.sip.dialog and peer.address.host == self.remote:
+                        self.trace().inbound += 1
                     host.send(peer, self.codec.envelope('response','sessionKeepAliveResponse',{'state': bool(self.sip.dialog and peer.address.host == self.remote)}))
                 push = commands.get('[protobuffers.pushDeviceCallCommand]')
                 if push:

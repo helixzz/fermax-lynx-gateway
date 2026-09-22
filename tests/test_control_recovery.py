@@ -78,6 +78,9 @@ class RecoveryTests(unittest.TestCase):
         self.assertIsNone(original.host)
         self.assertNotIn(original, c.hosts)
         self.assertEqual(self.state.control_health, 'retrying')
+        failure = next(r['detail'] for r in self.state.diagnostics.logs() if r['kind'] == 'control_result')
+        self.assertEqual(failure['transaction_id'], expired.diagnostic_id)
+        self.assertEqual(failure['error'], 'timeout')
         diagnostic = self.state.logs(limit=1)[0]['detail']
         self.assertEqual(diagnostic['received'], 0)
         self.assertEqual(diagnostic['invalid'], 0)

@@ -137,3 +137,32 @@ class ControllerTests(unittest.TestCase):
         c.iteration()
         c.open.assert_not_called()
         self.assertEqual(self.state.logs(limit=1)[0]['kind'],'control_failed')
+
+    def test_control_trace_links_request_and_response_without_raw_relay(self):
+        c = self.c
+        self.state.call_id, self.state.panel_id = 'synthetic-call', 'hall'
+        self.state.allow_open, self.state.relays = True, ['private-relay']
+        self.state.control_health = 'ready'
+        pending = SimpleNamespace(result=None, error=None, diagnostic_id='local-transaction')
+        c.client.peers = {(c.remote, 52102): object()}
+        c.client.request.return_value = pending
+        c.open(request_id='manual')
+        c.service_operations()
+        sent = next(r['detail'] for r in self.state.diagnostics.logs() if r['kind']=='control_sent')
+        self.assertEqual(sent['transaction_id'], 'local-transaction')
+        self.assertFalse(sent['request_fields']['doormatic'])
+        self.assertNotIn('private-relay', str(sent))
+        pending.result = {'result':'PANEL_OPEN_DOOR_RESULT_OK'}
+        c.service_operations()
+        result = next(r['detail'] for r in self.state.diagnostics.logs() if r['kind']=='control_result')
+        self.assertEqual(result['transaction_id'], sent['transaction_id'])
+        self.assertEqual(c.client.request.call_count, 1)
+
+    def test_keepalive_failure_is_recorded_before_end_without_retry(self):
+        c = self.c
+        c.keep_pending = SimpleNamespace(error='timeout', result=None)
+        c.service_operations()
+        c.sip.end.assert_called_once()
+        c.client.request.assert_not_called()
+        row = next(r['detail'] for r in self.state.diagnostics.logs() if r['kind']=='session_liveness')
+        self.assertEqual((row['stage'], row['failed']), ('failed', 1))

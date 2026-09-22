@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.3
+
+- Fill gaps in existing control diagnostics with allowlisted request/response semantics, relay fingerprints, local transaction IDs, capability changes and bounded session keepalive summaries. Preserve command order, retries, opening policy and existing settings.
+- Include failed discovery attempts before recovery; never log raw relay labels, PMU tag contents, credentials or packets. Existing seven-day / 10,000-record limits apply. See [control diagnostics](docs/control-diagnostics.md).
+- This improves failure evidence; it does not fix or prove downstream elevator authorization. No state migration; rollback to 0.7.2 preserves settings.
+
+
 ## 0.7.2
 
 - Expire phone operation notices after four seconds. Recover stalled foreground state streams with read-only snapshots, so a short visit need not wait for the former 45-second watchdog.
@@ -108,3 +115,4 @@ restart ends in-memory administrator/short phone sessions; device grants can ren
 Rolling back code removes phone functionality. Keep the newer private state intact
 unless a separately verified state restore is necessary; restoring an older device
 registry can undo revocations. Never publish state backups with release assets.
+
