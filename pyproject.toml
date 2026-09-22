@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fermax-lynx-gateway"
-version = "0.7.2"
+version = "0.7.3"
 description = "Experimental local Linux gateway for compatible LYNX video intercoms"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,3 +20,4 @@ include = ["fermax*"]
 
 [tool.setuptools.package-data]
 fermax = ["web/*.html", "web/*.js", "web/*.css", "web/*.json"]
+
